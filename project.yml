@@ -1,0 +1,27 @@
+name: MonoScan11
+options:
+  bundleIdPrefix: org.monoscan11
+  deploymentTarget:
+    iOS: '16.0'
+targets:
+  MonoScan11:
+    type: application
+    platform: iOS
+    sources:
+      - path: ios/MonoScan11
+    info:
+      path: ios/MonoScan11/Info.plist
+      properties:
+        CFBundleDisplayName: MonoScan11
+        NSCameraUsageDescription: Kamera görüntülerinden yerel 3D tarama verileri oluşturmak için kullanılır.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.monoscan11.app
+        SWIFT_VERSION: 5.0
+        TARGETED_DEVICE_FAMILY: '1'
+        IPHONEOS_DEPLOYMENT_TARGET: '16.0'
+        CODE_SIGN_STYLE: Automatic

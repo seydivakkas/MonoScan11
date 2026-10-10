@@ -1,0 +1,32 @@
+# Editor and interpreter
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.vscode/
+.idea/
+
+# Xcode (prototype not yet compiled on macOS)
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+.build/
+
+# Private local captures and generated results
+Scans/
+scans/
+datasets/
+data/
+reconstruction/
+demo-output/
+local-results/
+*.db
+*.db-journal
+*.zip
+
+# Local secrets and signing
+.env
+.env.*
+*.p12
+*.mobileprovision

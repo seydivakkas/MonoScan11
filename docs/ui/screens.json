@@ -1,0 +1,100 @@
+{
+  "contract": "UI-WF-1.0",
+  "disclaimer": "Arayüz konseptleri; gerçek iPhone uygulamasından alınmış ekran görüntüleri değildir.",
+  "size_px": [
+    828,
+    1792
+  ],
+  "screens": [
+    {
+      "id": 1,
+      "file": "01-splash-screen.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 2,
+      "file": "02-onboarding-how-it-works.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 3,
+      "file": "03-onboarding-capture-rules.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 4,
+      "file": "04-onboarding-outputs.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 5,
+      "file": "05-home-dashboard.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 6,
+      "file": "06-new-scan-setup.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 7,
+      "file": "07-permissions-screen.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 8,
+      "file": "08-live-capture-screen.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 9,
+      "file": "09-capture-quality-feedback.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 10,
+      "file": "10-session-summary.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 11,
+      "file": "11-frame-gallery.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 12,
+      "file": "12-sparse-preview.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 13,
+      "file": "13-export-package-screen.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 14,
+      "file": "14-projects-list.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 15,
+      "file": "15-project-detail.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 16,
+      "file": "16-help-capture-guide.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 17,
+      "file": "17-settings-screen.png",
+      "kind": "concept_mockup"
+    },
+    {
+      "id": 18,
+      "file": "18-error-states.png",
+      "kind": "concept_mockup"
+    }
+  ]
+}

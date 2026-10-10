@@ -1,0 +1,231 @@
+MONOSCAN11 — iPHONE 11 ARAYÜZ TEL KAFES (WIREFRAME) ŞARTNAMESİ
+Sürüm: UI-WF-1.0 | Durum: PLAN / TASARIM — UYGULAMA DERLENMEDİ
+Dil: Türkçe | Hedef: iPhone 11 (414×896 pt mantıksal ekran; tasarım ölçüsü)
+
+0. PROJE SÖZLEŞMESİ VE TASARIM DOĞRULUK KURALLARI
+- Ürün: LiDAR olmadan iPhone 11 kamerası + ARKit kamera takibiyle görüntü/poz toplama; Windows'ta COLMAP ile SfM/MVS.
+- iPhone'da tamamlanmış yoğun nokta bulutu veya 3D mesh varmış gibi davranma.
+- Arayüz tasarımını bitmiş uygulama özelliği gibi sunma: bütün ekranlar TASARIM, geliştirme ve iPhone testi gelecek aşamada.
+- Gerçek olmayan yüzde, puan, milimetre doğruluğu veya 3D nokta sayısı üretme.
+- ARKit seyrek özellik noktaları yalnızca gerçekten oturumdan alınıp yüklenebilirse gösterilir.
+- 'Kapsama yüzdesi', 'örtüşme puanı', 'ışık kalitesi' ve 'bulanıklık tespiti' ancak algoritma ve eşik değerleri test edildikten sonra açılır.
+- Çevrimdışı ve cihazda saklama: internete gönderim yok; kullanıcı dışa aktarmayı kendisi başlatır.
+- iPhone 11 tekli arka geniş kamera, ARKit poz takibi. TrueDepth ön kamera P3 araştırma modu, ilk uygulama modunda yok.
+- Xcode/macOS ile derleme, imzalama, gerçek iPhone 11 üzerinde kullanım, cihaz performansı ve doğruluk testleri SON AŞAMAYA ERTELENDİ.
+
+A. ORTAK TASARIM SİSTEMİ
+- Tek hedef mantıksal çerçeve: iPhone 11 portrait 414 × 896 pt; gerçek sistem güvenli alanını iOS belirler.
+- İçerik yatay kenar boşlukları: 20 pt; 8 pt aralık sistemi; kart yuvarlama 16 pt; ana eylem en az 50 pt yükseklikte.
+- İkonlu dokunmatik hedefler asgari 44×44 pt; iOS durum çubuğu ve alt home indicator korunur.
+- Görsel tema: koyu lacivert/grafit, açık metin, camgöbeği ana aksiyon. Uyarı turuncu; hata kırmızı; başarılı yeşil. Renk dışında ikon ve metin de durum verir.
+- Tipografi: iOS SF font ailesi (sistem yazı tipi). Başlık 28; ekran başlığı 22; kart 17; gövde 15; yardımcı 12–13 pt. Dynamic Type desteklenecek.
+- Ana navigasyon (4 sekme): [Ana Sayfa] [Taramalar] [Rehber] [Ayarlar]. Canlı kamera akışında sekme çubuğu gizlenir.
+- Üst bilgi düzeni: geri ok (gereken yerde), tek satırlık başlık, sağda bağlama uygun tek eylem.
+- Birincil buton: geniş, sabit alt eylem alanında; iptal ve silme işleminde açık onay; devre dışı butonda neden açıklaması.
+- Örnek tarih/sayılar yalnızca tasarım demosudur; README'de 'tasarım maketi, çalışan ekran görüntüsü değildir' notu kullanılır.
+- Her sayfada erişilebilirlik etiketleri, boş/yükleniyor/hata durumları ve gerçek veri eksikse 'veri yok' açıklaması planlanır.
+
+B. NAVİGASYON HARİTASI
+01 Splash → ilk açılışta 02A → 02B → 02C → 05 Ana Sayfa
+05 Ana Sayfa → 06 Yeni Tarama → 07 İzin Kontrol → 08 Canlı Tarama → 09 Kalite Uyarıları → 10 Çekim Özeti
+10 Çekim Özeti → 11 Galeri / 12 Seyrek Önizleme (veri varsa) / 13 Dışa Aktarım
+05 Ana Sayfa → 14 Projelerim → 15 Proje Detayı → 11 / 12 / 13
+05 Ana Sayfa → 16 Rehber / 17 Ayarlar; hatalarda 18 Durum/Çözüm sayfası veya ilgili modal.
+
+01 — SPLASH (01-splash-screen.png)
+KONUM / KOPYA:
+- Tam ekran koyu fon, merkezde soyut nokta-kamera çizgi logosu (LiDAR simgesi değil).
+- Logo altında 'MonoScan11' (28 pt, ortalı).
+- Altındaki açıklama 'LiDAR olmadan, görüntülerden 3D.'
+- En altta 'v0.1 • Araştırma prototipi'.
+DAVRANIŞ: 1–2 saniyelik otomatik geçiş önerisi; yükleme başarısızsa takılı kalmaz. Splash üzerinde 'Devam' butonu YOK.
+DURUM: Marka ekranı; henüz gerçek çekim yok.
+
+02A — ONBOARDING: NASIL ÇALIŞIR? (02-onboarding-how-it-works.png)
+ÜST: 'Atla' sağ üst; ilerleme '1/3'.
+ORTA: Üç yatay/dikey ikon-kart: 'Görüntüleri yakala' → 'Kamera hareketini kaydet' → 'Windows'ta 3D oluştur'.
+AÇIKLAMA: 'MonoScan11, LiDAR kullanmaz. Fotoğraf ve hareket bilgisini 3D rekonstrüksiyon için toplar.'
+ALT: Birincil 'İleri' (tam genişlik), altta 3 noktalı sayfa göstergesi.
+ETKİLEŞİM: İleri 02B; Atla 05. Görseller kavramsal olup gerçek model çıktısı gibi sunulmaz.
+
+02B — ONBOARDING: ÇEKİM KURALLARI (03-onboarding-capture-rules.png)
+ÜST: 'Geri' sol, 'Atla' sağ, ilerleme '2/3'.
+ORTA: Nesnenin çevresinde farklı açılarda telefon konumu illüstrasyonu.
+KARTLAR: 'Yavaş hareket et', 'Kareler arasında örtüşme bırak', 'Sabit aydınlatma kullan', 'Yansımalı veya dümdüz yüzeylerden kaçın'.
+ALT: 'İleri' → 02C. Metin kısa tutulur, detay Rehber'dedir.
+
+02C — ONBOARDING: ÇIKTILAR (04-onboarding-outputs.png)
+ÜST: 'Geri', ilerleme '3/3'.
+ORTA: Dosya paketi şeması: 'Görüntüler' + 'Oturum metaverisi' + 'Poz verileri (varsa)' → 'ZIP'.
+AÇIKLAMA: 'Tam 3D model iPhone'da değil, Windows üzerinde hesaplanır.'
+ALT: Onay kutusu değil bilgilendirme 'Veriler cihazında tutulur'; büyük 'Başla' → 05.
+
+05 — ANA SAYFA (05-home-dashboard.png)
+ÜST (safe area sonrası): 'MonoScan11' sol; sağda rehber ? simgesi.
+ALT BAŞLIK: 'iPhone 11 • Kamera tabanlı tarama' (destek değil uygulama profili ifadesi).
+ANA KART: 2 satır: 'Yeni tarama' / 'Bir nesne veya mekân bölümü için görüntü topla'; sağda kamera ikonu; altta 'Tarama başlat' (birincil).
+ORTA 2 KART: 'Projelerim' / 'Önceki çekimler' ve 'Dışa aktarımlar' / 'Windows'a aktarılacak paketler'.
+ALT BÖLÜM: 'Son projeler' başlığı; veri varsa en son 2 kart, yoksa 'Henüz tarama yok. İlk taramanı başlat.'
+SABİT TAB BAR: Ana Sayfa (seçili), Taramalar, Rehber, Ayarlar.
+ETKİLEŞİM: tüm kartlar ilgili sayfaya gider. Son proje satırına basılınca 15. İlk yüklemede sahte projeler yok.
+
+06 — YENİ TARAMA AYARLARI (06-new-scan-setup.png)
+ÜST: geri ok / 'Yeni Tarama'.
+ALAN 1: 'Proje adı' metin alanı; yer tutucu 'Örn. Çalışma masası'. Boş kabul edilmez.
+ALAN 2: 'Tarama hedefi' seçim kartları: 'Küçük nesne', 'Büyük nesne', 'Mekân bölümü'.
+ALAN 3: 'Çekim' seçimi: 'Kamera + ARKit takibi' (varsayılan ve uygulanabildiğinde) veya 'Fotoğraf dizisi' (yedek mod, uygulanacak).
+ALAN 4: 'Önerilen çekim: farklı açılardan 30–60 fotoğraf' — sabit performans vaadi değildir.
+BİLGİ BANDI: '3D model Windows'ta üretilecek.'
+ALT: 'Çekime geç' (etkin: geçerli ad + mod); 'İptal' metin eylemi.
+ETKİLEŞİM: proje yerel olarak taslak açılır, sonra 07. İsim hatasında alan altında yardım metni.
+
+07 — İZİN VE HAZIRLIK (07-permissions-screen.png)
+ÜST: geri ok / 'Çekim Hazırlığı'.
+BİLGİ KARTI: 'Kamera gerekli' + 'Erişim durumunu kontrol et' butonu; reddedildiyse 'Ayarları Aç'.
+BİLGİ KARTI: 'ARKit izleme' + 'Cihaz uyumu ve oturum başlatma sırasında kontrol edilir'.
+ALT NOT: 'Fotoğrafları ZIP olarak paylaşmak için fotoğraf arşivine tam erişim zorunlu değildir.'
+ALT: 'Kamera Aç' yalnız erişim hazırsa; 'Geri Dön'.
+UYARI: Genel 'Motion izni zorunlu' ifadesi kullanılmaz; kullanılacak Core Motion API'sine bağlı izinler gerçek implementasyonda ayrıca incelenir.
+
+08 — CANLI TARAMA (08-live-capture-screen.png)
+KATMAN 0: Tam ekran gerçek kamera önizlemesi; sahte 3D mesh çizilmez.
+ÜST SOL: kapat X (taslak kaybı varsa onay); ÜST ORTA: kısaltılmış proje adı; ÜST SAĞ: 'i' yardım butonu.
+ÜST DURUM ÇİZGİSİ (kameranın üstünde yarı saydam): 'Takip: İyi / Sınırlı / Kullanılamıyor' (gerçek ARKit state) ve 'Kare: 0'.
+ORTA: ince hedef nişangâhı + yönlendirme metni 'Nesnenin çevresinden yavaşça ilerle'. Cihaz analizi yoksa yönlendirme genel kural olarak yazılır.
+ALT ÜST: küçük bilgi şeridi: 'Farklı açılardan fotoğraf topla'.
+ALT KOMUT SATIRI: sol 'Son kare' küçük thumbnail (varsa), ortada geniş çekim deklanşörü, sağda 'Bitir'.
+EN ALT: çekim adedi / kaydedilme durumu ('Kaydedildi' veya 'Kaydedilemedi'); iOS home indicator alanına taşmaz.
+DAVRANIŞ: çekim butonu → görüntü ve o an erişilebilir meta/poz kaydı; kayıt başarısızsa sayaç artmaz; 'Bitir' → 10 (kalite uyarısı varsa önce 09). Takip kaybı → 18 hata şeridi veya modal. Kapsama % göstergesi henüz YOK.
+
+09 — ÇEKİM KALİTE UYARILARI (09-capture-quality-feedback.png)
+ÜST: 'Çekim kontrolü' / geri 08.
+DURUM: 'İnceleme gerekli' uyarı kartı (yalnız ölçülebilir olaylarda; gerçek kalite metriği uygulanana kadar kullanıcı rehberi).
+SATIRLAR: 'Kayıt tamamlanmayan kare: X' (varsa), 'Takip sınırlı kaldı' (oturum kaydı varsa), 'Daha fazla açı yakalamak faydalı olabilir' (genel öneri).
+SEKME/TABLO YOK; her satırda simge + metin + açıklama.
+ALT: Birincil 'Çekime dön' ve ikincil 'Mevcut çekimle devam et'.
+DURUM SINIRI: Sahte '98/100 kalite', 'yüzde 92 örtüşme' ve algoritmasız 'kesin başarılı' ibaresi yasak.
+
+10 — ÇEKİM ÖZETİ (10-session-summary.png)
+ÜST: 'Çekim Özeti'; geri yerine 'Bitti' son işlem.
+BAŞLIK: Proje adı, durum 'Görüntüler kaydedildi' (yalnız başarıyla kaydedildiyse).
+İSTATİSTİK KARTLARI: 'Kayıtlı fotoğraf: N', 'Süre: mm:ss'; poz kaydı varsa 'Poz kaydı: N'; yoksa 'Poz verisi yok'.
+ALT BİLGİ: 'Bu ekran bir 3D model sonucu değildir. Rekonstrüksiyon Windows'ta yapılır.'
+ALT BUTONLAR: 'Kareleri İncele' → 11; 'Önizleme' → 12 (yalnız feature points mevcutsa; yoksa devre dışı açıklaması); 'Dışa Aktar' → 13 birincil.
+İKİNCİL: 'Projeye dön' → 15.
+
+11 — KARE GALERİSİ (11-frame-gallery.png)
+ÜST: geri / 'Fotoğraflar' / sağ 'Seç'.
+ÜST BİLGİ: 'N kare • Zaman sıralı'.
+ORTA: üç sütunlu kare grid; her tile çekim sıra numarası + kaydedilmiş görüntü; seçiliyken check işareti.
+FİLTRE: 'Tümü' seçili; 'Şüpheli' filtresi yalnız bulanıklık analizi geliştirildiğinde gösterilecek.
+SEÇİM MODU ALT: 'Seçilenleri sil' (kırmızı, onay diyalogu), 'İptal'.
+NORMAL MOD ALT: sabit yok, tab bar yerine geri navigasyonu.
+BOŞ DURUM: 'Henüz kaydedilmiş fotoğraf yok'.
+DAVRANIŞ: seçili kare silinince ilişkili metadata tutarlı güncellenir; canlı çekimde kayıt bütünlüğü için oturum sonrası silme yapılır.
+
+12 — SEYREK 3D ÖNİZLEME (12-sparse-preview.png)
+ÜST: geri / 'Seyrek Önizleme' / sağ 'Bilgi'.
+ANA ALAN: Siyah/grafit 3D koordinat düzlemi; YALNIZCA gerçekten ARKit'ten elde edilen rawFeaturePoints gibi gerçek seyrek noktalar varsa render edilir.
+ETKİLEŞİM: tek parmak döndür, iki parmak yakınlaştır, 'Görünümü sıfırla'.
+ALT PANEL: 'Seyrek özellik noktaları' ve 'Bu bir yüzey/mesh modeli değildir.'; nokta sayısı ancak kayıtlı veri ile hesaplandıysa yazılır.
+VERİ YOKSA: boş illüstrasyon + 'Bu çekimde seyrek nokta verisi bulunmuyor.' + 'Galeriye dön'.
+BİRİNCİL AKSİYON: 'Veri paketini dışa aktar' → 13. Yanıltıcı oda yüzeyi, doku veya metre cetveli YOK.
+
+13 — DIŞA AKTARIM (13-export-package-screen.png)
+ÜST: geri / 'Dışa Aktar'.
+PROJE KARTI: isim + kayıtlı fotoğraf sayısı + tahmini dosya boyutu (hesaplanabiliyorsa).
+DOSYA İÇERİĞİ: 'images/' fotoğraflar; 'session.json' oturum bilgisi; 'frames.json' kayıtlı kare meta verisi; 'poses.json' yalnız gerçek poz verisi varsa.
+ANA KARAR: 'ZIP paketi oluştur' birincil. ZIP tamamlanmadan paylaş butonu gösterilmez/etkinleştirilmez.
+BAŞARILI DURUM: 'Paket hazır' + 'Dosyalara Kaydet / Paylaş' (iOS paylaşım sayfası), ikincil 'Tekrar Oluştur'.
+BİLGİ NOTU: 'Windows bilgisayarında COLMAP ile model oluştur.'
+HATA: depolama yetersiz / ZIP başarısız 18. Bulut yükleme iddiası yok.
+
+14 — PROJELERİM (14-projects-list.png)
+ÜST: 'Taramalar' / sağ '+' yeni tarama.
+ARAMA: 'Projelerde ara' filtre alanı.
+FİLTRE: 'Tümü' 'Taslak' 'Tamamlanan' 'Dışa Aktarılan'.
+LİSTE: küçük proje görseli (gerçek çekimden), proje adı, tarih, fotoğraf adedi, gerçek kaydedilmiş durum.
+SATIR EYLEMİ: 15 detaya gider; uzun basış veya ... menüsü → yeniden adlandır/sil.
+BOŞ DURUM: 'Henüz proje yok' + 'Yeni Tarama'.
+SABİT TAB BAR: Ana Sayfa, Taramalar (seçili), Rehber, Ayarlar.
+
+15 — PROJE DETAYI (15-project-detail.png)
+ÜST: geri / proje adı / sağ '...' menüsü.
+BAŞLIK KARTI: proje küçük görseli, ad, tarih, durum. Tarih varsa gerçek.
+ÖZET SATIRLARI: mod, fotoğraf sayısı, oturum süresi, poz verisi var/yok.
+İŞLEM DÜĞMELERİ: 'Fotoğraflar' → 11; 'Seyrek Önizleme' → 12 (uygun veri varsa); 'Dışa Aktar' → 13.
+ALT İKİNCİL: 'Yeni çekime başla' → 06 (orijinal veri üzerine otomatik yazmaz); 'Projeyi sil' → onay.
+PROJE NOTU: serbest metin, 'Kaydet' ile kalıcı. Başarısız yazmada hata gösterilir.
+
+16 — REHBER (16-help-capture-guide.png)
+ÜST: 'Çekim Rehberi'.
+GÖRSEL 1: örnek açı dolaşımı çizimi ve 'Nesneyi farklı açılardan görüntüle'.
+KARŞILAŞTIRMA KARTLARI: 'İyi: dokulu ve net yüzey' / 'Zor: parlak, saydam, dokusuz yüzey'.
+AÇILIR BAŞLIKLAR: 'Kaç fotoğraf?', 'LiDAR var mı?', 'Neden Windows gerekiyor?', 'Poz kaydı yoksa ne olur?'.
+ALT: 'Yeni Tarama' butonu.
+TAB BAR: Rehber (seçili).
+YANIT İLKESİ: SfM/MVS'nin her nesne ve ışıkta başarılı olacağını garanti etme.
+
+17 — AYARLAR (17-settings-screen.png)
+ÜST: 'Ayarlar'.
+BÖLÜM 1 ÇEKİM: 'Varsayılan çekim modu' seçim, 'Çekim sesleri' aç/kapat (uygulama uygulandığında), 'Çekim ipuçları' aç/kapat.
+BÖLÜM 2 DEPOLAMA: 'Yerel depolama alanı' (ölçülmüşse), 'Geçici ZIP'leri temizle' (onay).
+BÖLÜM 3 GİZLİLİK: 'Veriler cihazında saklanır'; 'Paylaşım ancak sen seçtiğinde başlar'.
+BÖLÜM 4 HAKKINDA: 'MonoScan11', 'Sürüm', 'Açık kaynak lisansları', 'Windows işleme rehberi'.
+TAB BAR: Ayarlar (seçili). Var olmayan ayarları etkin göstermeme.
+
+18 — HATA / DURUM TASARIMLARI (18-error-states.png; ayrı varyant kompoziti)
+18A KAMERA İZNİ YOK: Kamera üstü modal; başlık 'Kamera erişimi gerekli'; 'Ayarları Aç' / 'Geri'.
+18B DEPOLAMA YETERSİZ: 'Yeni kare kaydedilemiyor'; 'Depolama Alanını Görüntüle' / 'Projeye Dön'. Kaydetme başarısı iddia edilmez.
+18C YETERSİZ KARE: Çekimi bitirmeden önce yumuşak uyarı; 'Az sayıda görüntü var; 3D oluşturma başarısız olabilir' / 'Devam Et' / 'Yine de Bitir'. Kesin başarı eşiği diye davranma.
+18D AR TAKİP KAYBI: Canlı kamerada uyarı şeridi 'Takip sınırlı'; 'Yavaş hareket et ve dokulu yüzeye yönelt'; devam ederse duraklat/yeniden başlat. Erişilemeyen poz 'var' sayılmaz.
+18E ZIP OLUŞTURULAMADI: Export üzerinde hata kartı 'Paket oluşturulamadı'; hata nedeni varsa göster; 'Tekrar Dene' / 'Vazgeç'.
+GLOBAL DAVRANIŞ: hata açıklaması kısa, çözüm eylemi net, orijinal veriyi silmeyen güvenli varsayılan.
+
+C. README GÖRSEL SIRA VE ETİKETLERİ
+README ana görselleri: 05 ana sayfa → 06 yeni tarama → 08 canlı çekim → 09 uyarı → 10 özet → 11 galeri → 12 seyrek önizleme → 13 export → 14 projeler → 16 rehber.
+Ek görseller (UI tasarım koleksiyonu): 01, 02, 03, 04, 07, 15, 17, 18.
+Her görsel açıklamasında açıkça 'Arayüz konsepti / planlanan deneyim; gerçek iPhone ekran görüntüsü değildir' denir.
+Çizim dosyaları tasarım yoludur; kaynak kodda sayfanın varlığı, iPhone'un derlenip çalıştığı veya ölçüm başarısı anlamına gelmez.
+
+D. AKIŞ MİNİMUM KABUL ÖLÇÜTLERİ (İLERİDE)
+- 01–05: Açılış akışı ve sekmeler; bütün ileri/geri bağları doğru.
+- 06: Geçerli proje adı olmadan başlatma kapalı; taslak veri kaybolmaz.
+- 07: Kamera izni reddedildiğinde kilitlenmeden Ayarlar'a yol.
+- 08: Gerçek kaydedilmeyen kare sayaçtan düşer; AR takip durumu kaynakla tutarlı.
+- 09: Hesaplanmamış kalite puanları görünmez.
+- 10–11: Fotoğraf sayıları ve galeri eşleşir; silme geri alınamaz eylem olarak onay ister.
+- 12: Seyrek veri yokken 3D nokta çizimi görünmez.
+- 13: ZIP açılabilir, manifest gerçek içerikle eşleşir; başarısız export başarılı görünmez.
+- 14–15: Projeler birbirine karışmaz; silme onaylı; açma/geri tutarlı.
+- 16–17: Kullanım rehberi donanım sınırlarıyla çelişmez; ayarlar gerçek davranışa bağlanır.
+- 18: Hatalar kullanıcı verisini kaybettirmeden açıklanır.
+
+E. GELİŞTİRME SIRASI
+P0: Windows tarafı ve Github repo, veri sözleşmesi, fotoğraf/metadata doğrulama, SfM/MVS ve otomatik testler.
+P1 (KOD PLANLAMASI): SwiftUI iskeleti, 01–07/14–17 gezinme, yerel proje veri modeli; derleme kanıtı yok.
+P2 (KOD PLANLAMASI): 08/10/11/13 kamera kaydı ve dışa aktarım; 09/12 yalnız doğrulanmış sensör/algoritma verisine bağlı.
+P3 (KOD PLANLAMASI): kalite metrikleri, opsiyonel TrueDepth araştırması, benchmark ve cihaz optimizasyonu.
+SON AŞAMA (ERTELEME): macOS/Xcode üzerinde iOS build + signing; gerçek iPhone 11 kamera/ARKit/izin/performans testi; Windows ile uçtan uca gerçek fotoğraf rekonstrüksiyonu; bilimsel doğruluk raporu.
+
+F. DOSYA ADLARI (HER BİRİ 414×896 pt TASARIM TUVALİ; GEREKİRSE 828×1792 px @2x)
+01-splash-screen.png
+02-onboarding-how-it-works.png
+03-onboarding-capture-rules.png
+04-onboarding-outputs.png
+05-home-dashboard.png
+06-new-scan-setup.png
+07-permissions-screen.png
+08-live-capture-screen.png
+09-capture-quality-feedback.png
+10-session-summary.png
+11-frame-gallery.png
+12-sparse-preview.png
+13-export-package-screen.png
+14-projects-list.png
+15-project-detail.png
+16-help-capture-guide.png
+17-settings-screen.png
+18-error-states.png
+
+BU BELGE GÖRSEL ÜRETİMİNİN ÖN SÖZLEŞMESİDİR. ONAYLI ARAYÜZ METNİ OLMADAN GÖRSEL VEYA UI KODUNDA FONKSİYON İDDİASI ÜRETİLMEZ.

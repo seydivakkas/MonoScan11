@@ -1,0 +1,54 @@
+name: Python tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.11', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Unit tests (no Xcode / no COLMAP required)
+        run: python -m unittest discover -s tests -v
+      - name: Python syntax
+        run: python -m compileall -q tools tests scripts
+  swift-foundation:
+    name: Linux Swift core / ZIP format contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Swift version
+        run: swift --version
+      - name: Swift syntax checks (NOT Xcode compile)
+        run: swiftc -frontend -parse ios/MonoScan11/*.swift
+      - name: Compile and test portable Swift core
+        run: |
+          swiftc -O ios/MonoScan11/ProjectRecord.swift ios/MonoScan11/ZIPStore.swift tests/swift/main.swift -o /tmp/monoscan-core-tests
+          /tmp/monoscan-core-tests /tmp/monoscan-export-sample.zip
+      - name: ZIP CRC and Windows JSON compatibility
+        run: |
+          python - <<'PY'
+          import tempfile, zipfile, pathlib, subprocess, sys
+          archive=pathlib.Path('/tmp/monoscan-export-sample.zip')
+          with zipfile.ZipFile(archive) as src:
+              assert src.testzip() is None
+              names=src.namelist()
+              assert 'session.json' in names and sum(n.startswith('images/') for n in names)==3
+              with tempfile.TemporaryDirectory() as folder:
+                  src.extractall(folder)
+                  subprocess.run([sys.executable,'tools/monoscan.py','validate',folder],check=True)
+          print('PASS: ZIP integrity + Python session.json contract')
+          PY
