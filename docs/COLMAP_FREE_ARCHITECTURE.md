@@ -1,4 +1,4 @@
-# MonoScan11 — native SfM migration (N0–N4)
+# MonoScan11 — native SfM migration (N0–N5)
 
 **Branch:** `feature/native-sfm-n0-n3` | **Status:** experimental / no real-device validation
 
@@ -16,7 +16,7 @@ Native pipeline:
 3. local OpenCV features + epipolar RANSAC, track identities
 4. PHOTO_ONLY essential-matrix pair initialization / incremental PnP
 5. N4: strict ARKit VIO pose prior loader, opt-in ARKit-guided triangulation and robust Sim(3) diagnostics
-6. N5 (pending): local bundle adjustment with explicit pose uncertainty limits
+6. N5: robust sparse BA with simultaneous camera and point optimization, fixed photo gauge and explicitly heuristic ARKit priors
 7. N6 (pending): physically grounded dense MVS and optional meshing
 
 Constraints:
@@ -65,3 +65,7 @@ Ayrıntılı sıra: [ROADMAP.md](ROADMAP.md).
 ## N4 implementation pointer
 
 See [N4 ARKit VIO fusion](N4_ARKIT_VIO_FUSION.md). The existing iPhone v1 session stores camera transforms, but it does **not** contain trustworthy per-frame covariance; sigma values must be null and image reprojection disagreement must not be treated as sensor standard deviation. The N4 synthetic code is tested on CI; actual iPhone performance is N9-only.
+
+## N5 source and contract
+
+[Native Sparse Bundle Adjustment](N5_SPARSE_BUNDLE_ADJUSTMENT.md) implements local SciPy-based reprojection optimization in independent refinement run directories; it does not call a COLMAP executable or assert real-data acceptance. Optimization uncertainties are unknown unless measured and validated by a future reviewed acquisition schema.
