@@ -198,6 +198,14 @@ def main(argv: list[str] | None = None) -> int:
     rec.add_argument("--focal-px", type=float, default=None,
                      help="session.json yoksa kalibre edilmiş odak uzunluğu (piksel)")
     rec.add_argument("--dry-run", action="store_true")
+    rec.add_argument("--bundle-adjust", action="store_true",
+                     help="Bir rekonstruksiyonun ardindan yeni, bagimsiz N5 refine run'i olustur")
+    rec.add_argument("--prior-weight", type=float, default=2.0,
+                     help="Yalniz ARKit-guided icin heuristik VIO pose agirligi; kovaryans DEGIL")
+    refine = subs.add_parser("refine", help="Varolan N3/N4 native run icin sentetik N5 sparse BA")
+    refine.add_argument("run", type=Path)
+    refine.add_argument("--prior-weight", type=float, default=2.0)
+    refine.add_argument("--max-nfev", type=int, default=70)
     ins = subs.add_parser("inspect", help="Native rekonstrüksiyon klasörü özetini oku")
     ins.add_argument("run", type=Path)
     alignment = subs.add_parser("align-arkit", help="PHOTO_ONLY kameralarını ARKit VIO'ya Sim(3) ile hizala; yalnız tanı")
@@ -235,6 +243,22 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     output, summary = reconstruct(args.session, focal_px=args.focal_px)
             except (ReconstructionError, VisionError, CameraGeometryError, ARKitFusionError) as exc:
+                raise SessionError(str(exc)) from exc
+            if args.bundle_adjust:
+                from monoscan_core.bundle_adjustment import BundleAdjustmentError, bundle_adjust
+                try:
+                    output, summary = bundle_adjust(output, prior_weight=args.prior_weight)
+                except BundleAdjustmentError as exc:
+                    raise SessionError("Sparse model created; N5 BA refinement failed: " + str(exc)) from exc
+            print(json.dumps({"run": str(output), **summary}, indent=2, ensure_ascii=True))
+            return 0
+        elif args.action == "refine":
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+            from monoscan_core.bundle_adjustment import BundleAdjustmentError, bundle_adjust
+            try:
+                output, summary = bundle_adjust(args.run, prior_weight=args.prior_weight,
+                                                max_nfev=args.max_nfev)
+            except BundleAdjustmentError as exc:
                 raise SessionError(str(exc)) from exc
             print(json.dumps({"run": str(output), **summary}, indent=2, ensure_ascii=True))
             return 0
