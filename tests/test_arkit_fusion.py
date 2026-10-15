@@ -135,6 +135,8 @@ class ARKitFusionTests(unittest.TestCase):
         np.testing.assert_allclose(report["translation"], shift, atol=1e-5)
         self.assertFalse(report["sensor_covariance_known"])
         self.assertFalse(report["real_world_validated"])
+        self.assertIn("im8", report["pose_center_residual_by_image_nominal_m"])
+        self.assertGreater(report["pose_center_residual_by_image_nominal_m"]["im8"], 1.0)
 
     def test_sim3_collinear_rejected(self):
         source = {}
@@ -169,6 +171,10 @@ class ARKitGuidedTests(unittest.TestCase):
             self.assertEqual(len(list((root / "reconstruction" / "runs").iterdir())), 1)
             cameras = json.loads((run / "cameras.json").read_text())["cameras"]
             self.assertTrue(all(x["pose_source"] == "arkit_vio" for x in cameras))
+            self.assertTrue(all(x["pose_diagnostics"]["observation_count"] >= 8 for x in cameras))
+            self.assertTrue(all(x["translation_sigma_m"] is None for x in cameras))
+            self.assertTrue(all(x["pose_diagnostics"]["sensor_pose_covariance_known"] is False
+                                for x in cameras))
             tracks = json.loads((run / "tracks.json").read_text())
             self.assertTrue(all(len(x["observations"]) >= 2 for x in tracks))
             self.assertTrue((run / "sparse.ply").exists())
