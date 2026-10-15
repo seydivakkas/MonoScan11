@@ -1,6 +1,6 @@
 # MonoScan11
 
-> **Native SfM geliştirme dalı (N0–N3):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
+> **Native SfM geliştirme dalı (N0–N4):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
 
 **LiDAR'sız iPhone 11 için kamera tabanlı 3D rekonstrüksiyon araştırma projesi**
 
@@ -15,7 +15,7 @@ MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açı
 | Windows / Linux Python araçları | Kaynak kodu hazır; test edildi | `python -m unittest discover -s tests -v` |
 | Sentetik iki bakışlı derinlik hesabı | Tamamlandı, deterministik demo | `python tools/monoscan.py demo demo-output` |
 | Fotoğraf / ARKit `session.json` denetimi | Otomatik test edildi | JPEG/PNG başlık, boyut, matris, poz, güvenli dosya adları |
-| MonoScan11 native SfM motoru | İlk prototip kodlandı, gerçek veri bekliyor | N1–N3 sentetik testler; gerçek fotoğraf / ölçüm kabulü yok |
+| MonoScan11 native SfM + ARKit VIO | N0–N4 sentetik prototip; gerçek veri bekliyor | PHOTO_ONLY, ARKit-guided ve Sim(3) geometrisi; sensör kovaryansı bilinmiyor |
 | Gerçek iPhone 11 fotoğraflarından 3D rekonstrüksiyon | **Bekliyor** | Yeni native pipeline henüz gerçek iPhone/Windows ortamında kabul edilmedi |
 | SwiftUI arayüz / iOS ARKit uygulaması | 18 ekran kodlandı; **Xcode derlenmedi** | Kaynak parse + Swift Foundation testleri; macOS/Xcode ve iPhone kabulü en sonda |
 | iOS ZIP paketinin Windows uyumu | Sentetik görüntülerle PASS | Swift ZIP32 CRC -> Python `validate` zinciri; gerçek iPhone verisi değil |
@@ -69,44 +69,44 @@ Alternatif: `Run-Tests.cmd` ve `Demo-Triangulation.cmd` dosyalarına çift tıkl
 
 PLY dosyasını CloudCompare veya MeshLab gibi bir 3D görüntüleyici ile açabilirsin. Demo internet gerektirmez.
 
-## 2. iPhone 11'in normal Kamera uygulamasıyla ilk gerçek fotoğraf deneyini hazırla
+## 2. Gerçek fotoğraf analizinden önceki geliştirme sınırı (N4–N8)
 
-Mac ve Xcode **gerekmez**. Telefonunun arka 1× ana kamerasıyla, hareketsiz ve dokulu bir nesnenin etrafından **30–100 farklı açı** çek; ardışık karelerde yaklaşık %60–80 örtüşme hedefle. Nesneyi döndürmek yerine mümkünse kamerayı çevresinde gezdir; ışığı ve odağı sabit tut. Bulanıklık, ayna, dümdüz duvar, hareket eden insan ve sadece yerinde dönme SfM için sorunludur.
+**Gerçek iPhone 11 fotoğraf çekimi, gerçek sahne analizi ve bağımsız
+ölçüm doğrulaması N9'a ertelendi.** N4–N8 çalışmalarında yalnız
+programatik sentetik görüntüler, yapay kamera pozları ve test manifestleri
+kullanılır. Gerçek fotoğraf, örnek çekim veya internetten alınmış gerçek
+sahne veri seti bu aşamaların kabulü için kullanılmaz.
 
-**Önemli iPhone ayarı:** Ayarlar → Kamera → Biçimler → **En Uyumlu** seçeneğini kullanarak mümkünse JPEG çek. HEIC dosyaları önce JPEG/PNG'ye dönüştür; dosyanın uzantısını elle değiştirmek dönüştürme değildir. Fotoğrafları Windows'a **orijinal boyutuyla**, yeniden ölçeklendirmeden aktar.
-
-```text
-C:\scan-data\ilk-nesne\
-└── images\
-    ├── IMG_0001.JPG
-    ├── IMG_0002.JPG
-    └── ...
-```
-
-Görüntüleri kontrol et:
-
-```powershell
-python tools/monoscan.py validate "C:\scan-data\ilk-nesne"
-```
-
-ARKit kaydı olmadan da bu yöntem çalışabilir; çünkü SfM kamera pozlarını fotoğraflardan tahmin eder. Bu işlem hattının gerçek sahnede başarılı model ürettiğinin kanıtı **değildir**; native SfM gerçek fotoğraflarla ayrıca doğrulanmalıdır.
-
-## 3. MonoScan11 native SfM ile deneysel rekonstrüksiyon (Windows)
+## 3. N4 — İki bağımsız rekonstrüksiyon modu ve poz hizalama
 
 ```powershell
 python -m pip install -r requirements-native.txt
-python tools/monoscan.py validate "C:\scan-data\ilk-nesne"
-python tools/monoscan.py reconstruct "C:\scan-data\ilk-nesne" --mode photo-only --focal-px 1800
+python -m unittest discover -s tests -v
+# N4–N8'de yalnız sentetik oturum örnekleri üzerinde:
+python tools/monoscan.py reconstruct "C:\scan-data\synthetic-session" --mode photo-only
+python tools/monoscan.py reconstruct "C:\scan-data\synthetic-session" --mode arkit-guided
+python tools/monoscan.py align-arkit "C:\scan-data\synthetic-session\reconstruction\runs\run-photo" "C:\scan-data\synthetic-session"
 ```
 
-`1800` örnektir, **kendi görüntülerinize ait kalibrasyon değeri değildir**.
-`session.json` içindeki gerçek `K` varsa `--focal-px` gerekmez.
-Arşivin orijinal görüntü ve veri dosyaları hiçbir zaman üzerine yazılmaz.
+`photo-only`: Görüntülerden SfM ile kamera pozlarını çıkarır, **ölçek keyfîdir**.
+Geçerli K içeren `session.json` yoksa kalibre edilmiş `--focal-px` gerekir.
 
-İşlem başarıyla sonuçlanırsa `reconstruction/runs/run-*/` altında
-`sparse.ply`, `cameras.json`, `tracks.json`, `summary.json` oluşur.
-Üçten fazla fotoğrafta yalnız bir alt küme kaydedilebildiyse `PARTIAL` yazılır.
-Gerçek veri, bağımsız ölçüm doğruluğu, dense MVS ve bundle adjustment **bekliyor**.
+`arkit-guided`: Yalnız `session.json` v1 içindeki ARKit VIO pozlarını kullanır;
+görüntü özelliklerini yerel SfM matematiği ile üçgenler. ARKit koordinatlarının
+birimleri yaklaşık metre kabul edilir ancak **bağımsız doğruluk kanıtı değildir**.
+
+`align-arkit`: Var olan `photo-only` koşusunun kamera merkezlerini
+ARKit'e Sim(3) ile hizalar. PLY'yi yeniden ölçeklendirmez; yalnız
+ölçek/hizalama/aşırı sapma istatistiklerini gösterir.
+
+Her başarılı native koşu yeni `reconstruction/runs/run-*/` dizini
+oluşturur: `sparse.ply`, `cameras.json`, `tracks.json`, `summary.json`.
+ARKit VIO'nun cihaz başına sayısal poz kovaryansı mevcut v1 biçiminde
+bulunmadığı için belirsizlik değerleri **null** raporlanır. Yalnız reprojeksiyon
+ve poz uyum kalıntıları gözlemlenebilir. Dense MVS, Bundle Adjustment ve
+gerçek cihaz kabulü henüz tamamlanmamıştır.
+
+[Ayrıntılı N4 ARKit VIO mimarisi ve sentetik kabul sınırları](docs/N4_ARKIT_VIO_FUSION.md).
 
 ## 4. Deneysel yerel SfM mimarisi
 
@@ -122,9 +122,8 @@ Windows MonoScan11 offline Python
    sparse.ply + cameras.json + tracks.json + summary.json
 ```
 
-Bu dalda `PHOTO_ONLY` modu tamamlanmamış, **deneysel** bir SfM çekirdeğidir.
-`session.json` içindeki K kullanılabilir, ancak ARKit pozları henüz N4
-aşamasındaki poz-füzyonu için kullanılmamaktadır. Metrik ölçek bilinmez.
+Bu dalda `photo-only` ve `arkit-guided` ayrı deneysel modlardır. ARKit VIO pozları
+`arkit-guided` modunda kullanılır; ancak metrik doğruluk N9'a kadar bilinmez.
 N5 Bundle Adjustment ve N6 yoğun MVS/mesh bu dalda yoktur.
 
 ## 5. Proje klasörleri
