@@ -137,6 +137,39 @@ class ARKitFusionTests(unittest.TestCase):
         self.assertFalse(report["real_world_validated"])
         self.assertIn("im8", report["pose_center_residual_by_image_nominal_m"])
         self.assertGreater(report["pose_center_residual_by_image_nominal_m"]["im8"], 1.0)
+        # Camera centers align, but synthetic camera orientations are deliberately unrotated.
+        # A good position fit must NOT hide that rotation disagreement.
+        self.assertAlmostEqual(report["median_inlier_orientation_residual_deg"], 22.0, places=3)
+        self.assertFalse(report["orientation_used_to_fit_alignment"])
+
+    def test_align_run_is_non_mutating_and_photo_only(self):
+        from monoscan_core.arkit_fusion import align_run_to_arkit
+        centers = [[0, 0, 0], [0.4, 0, 0], [0, 0.5, 0],
+                   [0, 0, 0.3], [0.25, 0.2, 0.2]]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            files, _ = synth_session(root, centers)
+            run = root / "photo-run"
+            run.mkdir()
+            camera_records = [{
+                "image": file.name,
+                "camera_to_world_cv": make_pose(np.asarray(point) / 2.0).tolist(),
+            } for file, point in zip(files, centers)]
+            (run / "cameras.json").write_text(json.dumps({"cameras": camera_records}))
+            (run / "summary.json").write_text(json.dumps({
+                "engine": "monoscan-native", "mode_used": "photo-only"
+            }))
+            before = sorted(p.name for p in run.iterdir())
+            report = align_run_to_arkit(run, root)
+            self.assertEqual(sorted(p.name for p in run.iterdir()), before)
+            self.assertAlmostEqual(report["scale"], 2.0, places=6)
+            self.assertLess(report["median_inlier_orientation_residual_deg"], 1e-3)
+            self.assertFalse(report["metric_accuracy_certified"])
+            (run / "summary.json").write_text(json.dumps({
+                "engine": "monoscan-native", "mode_used": "arkit-guided"
+            }))
+            with self.assertRaisesRegex(ARKitFusionError, "PHOTO_ONLY"):
+                align_run_to_arkit(run, root)
 
     def test_sim3_collinear_rejected(self):
         source = {}
