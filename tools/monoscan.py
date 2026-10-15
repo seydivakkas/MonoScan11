@@ -192,14 +192,17 @@ def main(argv: list[str] | None = None) -> int:
     subs = parser.add_subparsers(dest="action", required=True)
     val = subs.add_parser("validate", help="Fotoğrafları ve ARKit manifestini doğrula")
     val.add_argument("session", type=Path)
-    rec = subs.add_parser("reconstruct", help="MonoScan11 native SfM (photo-only experimental)")
+    rec = subs.add_parser("reconstruct", help="MonoScan11 native sparse SfM; photo-only or ARKit-guided")
     rec.add_argument("session", type=Path)
-    rec.add_argument("--mode", choices=["photo-only"], default="photo-only")
+    rec.add_argument("--mode", choices=["photo-only", "arkit-guided"], default="photo-only")
     rec.add_argument("--focal-px", type=float, default=None,
                      help="session.json yoksa kalibre edilmiş odak uzunluğu (piksel)")
     rec.add_argument("--dry-run", action="store_true")
     ins = subs.add_parser("inspect", help="Native rekonstrüksiyon klasörü özetini oku")
     ins.add_argument("run", type=Path)
+    alignment = subs.add_parser("align-arkit", help="PHOTO_ONLY kameralarını ARKit VIO'ya Sim(3) ile hizala; yalnız tanı")
+    alignment.add_argument("run", type=Path)
+    alignment.add_argument("session", type=Path)
     demo = subs.add_parser("demo", help="Sentetik iki-kamera geometri demosu")
     demo.add_argument("output", type=Path)
     args = parser.parse_args(argv)
@@ -218,12 +221,26 @@ def main(argv: list[str] | None = None) -> int:
             from monoscan_core.reconstruction import ReconstructionError, reconstruct
             from monoscan_core.vision import VisionError
             from monoscan_core.camera import CameraGeometryError
+            from monoscan_core.arkit_fusion import ARKitFusionError
             try:
-                output, summary = reconstruct(args.session, focal_px=args.focal_px)
-            except (ReconstructionError, VisionError, CameraGeometryError) as exc:
+                if args.mode == "arkit-guided":
+                    if args.focal_px is not None:
+                        raise SessionError("--focal-px is incompatible with arkit-guided mode")
+                    from monoscan_core.arkit_guided import reconstruct_arkit_guided
+                    output, summary = reconstruct_arkit_guided(args.session)
+                else:
+                    output, summary = reconstruct(args.session, focal_px=args.focal_px)
+            except (ReconstructionError, VisionError, CameraGeometryError, ARKitFusionError) as exc:
                 raise SessionError(str(exc)) from exc
             print(json.dumps({"run": str(output), **summary}, indent=2, ensure_ascii=True))
             return 0
+        elif args.action == "align-arkit":
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+            from monoscan_core.arkit_fusion import ARKitFusionError, align_run_to_arkit
+            try:
+                result = align_run_to_arkit(args.run, args.session)
+            except ARKitFusionError as exc:
+                raise SessionError(str(exc)) from exc
         elif args.action == "inspect":
             folder = args.run.resolve()
             if not folder.is_dir() or not all((folder / p).is_file()
