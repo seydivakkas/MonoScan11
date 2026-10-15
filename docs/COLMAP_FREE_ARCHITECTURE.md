@@ -1,4 +1,4 @@
-# MonoScan11 — native SfM migration (N0–N3)
+# MonoScan11 — native SfM migration (N0–N4)
 
 **Branch:** `feature/native-sfm-n0-n3` | **Status:** experimental / no real-device validation
 
@@ -15,8 +15,9 @@ Native pipeline:
 2. geometry: explicit CV (+Z camera forward) and ARKit (-Z camera forward)
 3. local OpenCV features + epipolar RANSAC, track identities
 4. PHOTO_ONLY essential-matrix pair initialization / incremental PnP
-5. subsequent iterations: local bundle adjustment; ARKit pose quality and priors
-6. subsequent iterations: physically grounded dense MVS and optional meshing
+5. N4: strict ARKit VIO pose prior loader, opt-in ARKit-guided triangulation and robust Sim(3) diagnostics
+6. N5 (pending): local bundle adjustment with explicit pose uncertainty limits
+7. N6 (pending): physically grounded dense MVS and optional meshing
 
 Constraints:
 - PHOTO_ONLY has **arbitrary scale** without an external scale anchor.
@@ -60,3 +61,7 @@ rekonstrüksiyon doğrulamasına sokulmaz.
 kod tabanına birleştirme mümkündür; gerçek veri doğrulaması PR birleştirme
 için zorunlu değildir. N9 olmadan ürünün gerçek tarama performansı onaylanmaz.
 Ayrıntılı sıra: [ROADMAP.md](ROADMAP.md).
+
+## N4 implementation pointer
+
+See [N4 ARKit VIO fusion](N4_ARKIT_VIO_FUSION.md). The existing iPhone v1 session stores camera transforms, but it does **not** contain trustworthy per-frame covariance; sigma values must be null and image reprojection disagreement must not be treated as sensor standard deviation. The N4 synthetic code is tested on CI; actual iPhone performance is N9-only.
