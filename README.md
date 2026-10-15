@@ -33,7 +33,7 @@ MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açı
 
 | Ana Sayfa | Canlı Tarama | Seyrek Önizleme | Windows'a Dışa Aktarım |
 |---|---|---|---|
-| [<img src="assets/screenshots/05-home-dashboard.png" alt="MonoScan11 ana sayfa konsepti" width="180">](assets/screenshots/05-home-dashboard.png) | [<img src="assets/screenshots/08-live-capture-screen.png" alt="Canlı tarama konsepti; görsel temsili" width="180">](assets/screenshots/08-live-capture-screen.png) | [<img src="assets/screenshots/12-sparse-preview.png" alt="Veri olmayan seyrek önizleme boş durum tasarımı" width="180">](assets/screenshots/12-sparse-preview.png) | [<img src="assets/screenshots/13-export-package-screen.png" alt="Windows COLMAP için ZIP dışa aktarım tasarımı" width="180">](assets/screenshots/13-export-package-screen.png) |
+| [<img src="assets/screenshots/05-home-dashboard.png" alt="MonoScan11 ana sayfa konsepti" width="180">](assets/screenshots/05-home-dashboard.png) | [<img src="assets/screenshots/08-live-capture-screen.png" alt="Canlı tarama konsepti; görsel temsili" width="180">](assets/screenshots/08-live-capture-screen.png) | [<img src="assets/screenshots/12-sparse-preview.png" alt="Veri olmayan seyrek önizleme boş durum tasarımı" width="180">](assets/screenshots/12-sparse-preview.png) | [<img src="assets/screenshots/13-export-package-screen.png" alt="Windows yerel SfM için ZIP dışa aktarım tasarımı" width="180">](assets/screenshots/13-export-package-screen.png) |
 
 **[Bütün 18 ekranı, wireframe TXT sözleşmesini ve arayüz akışını incele](docs/ui/README.md)** · [SwiftUI uygulama ve test durumu](docs/IOS_UI_IMPLEMENTATION.md) · [PNG koleksiyonu](assets/screenshots/README.md) · [Üretici kaynak kodu](scripts/generate_ui_mockups.py). iPhone'da yoğun nokta bulutu/mesh üretildiğini ima eden bir ekran bulunmaz. Seyrek önizlemede gerçek ARKit verisi yoksa boş durum gösterilir.
 
@@ -89,7 +89,7 @@ Görüntüleri kontrol et:
 python tools/monoscan.py validate "C:\scan-data\ilk-nesne"
 ```
 
-ARKit kaydı olmadan da bu yöntem çalışabilir; çünkü SfM kamera pozlarını fotoğraflardan tahmin eder. Bu, aynı fotoğraflar ile COLMAP'de gerçek başarılı model üretildiğinin kanıtı **değildir**; onu ayrıca çalıştırıp test edeceğiz.
+ARKit kaydı olmadan da bu yöntem çalışabilir; çünkü SfM kamera pozlarını fotoğraflardan tahmin eder. Bu işlem hattının gerçek sahnede başarılı model ürettiğinin kanıtı **değildir**; native SfM gerçek fotoğraflarla ayrıca doğrulanmalıdır.
 
 ## 3. MonoScan11 native SfM ile deneysel rekonstrüksiyon (Windows)
 
