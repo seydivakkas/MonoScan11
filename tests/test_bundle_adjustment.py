@@ -4,6 +4,9 @@ All point clouds, observations and camera poses are generated numerically.
 No user photos, image datasets, iPhone build or real measurements are used.
 """
 import json
+import os
+import subprocess
+import sys
 import math
 import tempfile
 import unittest
@@ -75,6 +78,7 @@ class SparseBATests(unittest.TestCase):
             self.assertLess(summary["post_ba_median_reprojection_error_px"],
                             summary["pre_ba_median_reprojection_error_px"] * 0.8)
             self.assertEqual(summary["bundle_adjustment"], "applied")
+            self.assertTrue(summary["bundle_adjustment_optimizer_success"])
             self.assertFalse(summary["metric_scale_known"])
             self.assertFalse(summary["real_world_validated"])
             self.assertIn("initial_baseline", summary["bundle_adjustment_gauge"])
@@ -117,6 +121,29 @@ class SparseBATests(unittest.TestCase):
             self.assertNotEqual(target, second)
             self.assertTrue((target / "tracks.json").exists())
             self.assertTrue((second / "tracks.json").exists())
+
+    def test_cli_refine_outputs_independent_json_run(self):
+        with tempfile.TemporaryDirectory() as td:
+            source = synthetic_run(td)
+            result = subprocess.run(
+                [sys.executable, "-m", "monoscan_core.cli", "refine",
+                 str(source), "--max-nfev", "90"],
+                cwd=str(Path(__file__).resolve().parents[1]),
+                capture_output=True, text=True, check=False,
+                env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["bundle_adjustment"], "applied")
+            self.assertTrue(Path(payload["run"]).joinpath("optimization.json").exists())
+            self.assertFalse(payload["real_world_validated"])
+
+    def test_refinement_iteration_budget_fail_closed(self):
+        with tempfile.TemporaryDirectory() as td:
+            source = synthetic_run(td)
+            with self.assertRaisesRegex(BundleAdjustmentError, "did not converge"):
+                bundle_adjust(source, max_nfev=2)
+            self.assertFalse((source / "refinements").exists())
 
     def test_reject_invalid_provenance_before_any_output(self):
         with tempfile.TemporaryDirectory() as td:
