@@ -37,3 +37,26 @@ Input intrinsics K belong to the exact image buffer dimensions and orientation.
 N1/N3 implementation limit: camera projection currently assumes undistorted
 pixel coordinates. Lens distortion calibration/correction and EXIF rotations
 have NOT yet been accepted on a real iPhone. Do not market 3D accuracy.
+
+
+## Yürürlükteki doğrulama ertelemesi — 16 Ekim 2026
+
+**Gerçek fotoğraf analizi SON AŞAMA (N9) olarak donduruldu.**
+Geliştirmenin başında fotoğraf örneği toplama veya gerçek dünya SfM doğrulama kapısı yoktur.
+
+Sıra: **N0–N3 (deneysel temel) → N4 (sentetik ARKit poz-füzyonu) →
+N5 (sentetik BA/optimizasyon) → N6 (sentetik yoğun MVS/mesh) →
+N7 (Windows/iOS arayüz ve veri entegrasyonu) →
+N8 (CI, sentetik uçtan uca, performans/güvenlik, paketleme hazırlığı) →
+N9 (gerçek iPhone, gerçek fotoğraf analizi ve bağımsız ölçüm kabulü)**.
+
+N4–N8 yalnız programatik olarak üretilen fotoğraf görüntüleri, yapay kamera
+pozu/kamera matrisi, sentetik nokta bulutu ve sentetik ARKit manifesti ile
+doğrulanabilir. Veri kaynağı her test raporunda `synthetic` olarak etiketlenir.
+Gerçek sahne fotoğrafları veya çevrim içi fotoğraf veri setleri de N9'dan önce
+rekonstrüksiyon doğrulamasına sokulmaz.
+
+**PR/review kapısı:** N0–N8 kod incelemesi ve sentetik CI sonucu yeterli ise
+kod tabanına birleştirme mümkündür; gerçek veri doğrulaması PR birleştirme
+için zorunlu değildir. N9 olmadan ürünün gerçek tarama performansı onaylanmaz.
+Ayrıntılı sıra: [ROADMAP.md](ROADMAP.md).
