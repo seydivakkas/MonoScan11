@@ -12,7 +12,7 @@
 | N2 | SIFT/özellik eşleştirme, reciprocal match, geometrik aykırı değer elemesi | Hayır | Sentetik doku/özellik eşleştirme testleri |
 | N3 | Yerel seyrek SfM: başlangıç çifti, kamera kaydı, PnP, triangulation, tracks | Hayır | Sentetik çoklu-görüş ve başarısızlık testleri; gerçek başarı iddiası yok |
 | **N4** | ARKit VIO kamera öncülleri, CV koordinat dönüşümü, ARKit-guided seyrek SfM ve robust Sim(3) | **Hayır** | **Kodlandı; sentetik CI PASS.** VIO gerçek ölçüm/kovaryans iddiası yok; cihaz kabulü N9 |
-| **N5** | Sparse Bundle Adjustment, aykırı nokta temizliği, reprojeksiyon/poz hata göstergeleri | **Hayır** | Bilinen sentetik 3B sahnede yakınsama, degenerate vaka ve regresyon testleri |
+| **N5** | SciPy sparse BA: kamera + 3B nokta eşanlı optimizasyon, gauge sabitleme, dayanıklı hata, ARKit heuristik prior ve belirsizlik raporu | **Hayır** | **Kodlandı; sentetik CI doğrulama kapısı.** N5 kaynak ve önce/sonra hata kökeni korunur. Gerçek veri yalnız N9 |
 | **N6** | Yoğun derinlik (MVS), derinlik füzyonu, yüzey/mesh ve geometri dışa aktarımı | **Hayır** | Sentetik ve lisanslı, programatik üretilen sahnelerde PLY/OBJ/mesh yapısal testleri |
 | **N7** | Windows komutları, hata akışı, 3B önizleme/raporlama, iOS ekran/ZIP ve veri sözleşmesi bütünleşmesi | **Hayır** | UI sözleşmeleri, sahte veri göstermeme, offline/hata kurtarma kontrolü |
 | **N8** | Sentetik uçtan uca regresyon, Windows/Linux CI, kaynak güvenliği, paketleme hazırlığı, performans profilleme | **Hayır** | Örneklemeye bağımlı olmayan test seti, sürüm/bağımlılık kontrolü; gerçek sonuç iddiası yok |
@@ -20,7 +20,8 @@
 
 **N0–N3:** Kodlanmış deneysel temel var; sentetik CI bulguları gerçek dünya doğruluğunu kanıtlamaz.
 **N4:** ARKit VIO pozlarını doğrudan kullanan native guided sparse mod, robust Sim(3) hizalama ve bilinmeyen kovaryans beyanı kodlandı. Sentetik regresyon mevcut; gerçek cihaz/gerçek ölçüm kabulü N9'da. Ayrıntı: [N4_ARKIT_VIO_FUSION.md](N4_ARKIT_VIO_FUSION.md).
-**N5–N8:** Henüz tamamlanmış kabul edilmez; geliştirme yapılacak.
+**N5:** Deneysel sparse BA motoru yazıldı; sentetik CI/güvenlik doğrulaması yapılıyor. [N5 BA sözleşmesi](N5_SPARSE_BUNDLE_ADJUSTMENT.md). Gerçek fotoğraf kabulü yok.
+**N6–N8:** Henüz tamamlanmış kabul edilmez; geliştirme yapılacak.
 **N9:** Bilinçli olarak ertelendi. Hiçbir erken aşamada kullanıcıdan fotoğraf isteme, gerçek sahne deneyi veya gerçek fotoğraf üzerinden model performansı iddiası oluşturma.
 
 ## Ara aşama doğrulama standardı
