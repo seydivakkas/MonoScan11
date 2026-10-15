@@ -1,3 +1,8 @@
+> **2026-10-15 native dalı kararı:** Güncel deneysel motor MonoScan11 native
+> OpenCV SfM'dir. Aşağıdaki COLMAP bölümü tarihsel eski davranışı açıklar;
+> yeni rekonstrüksiyon komutu COLMAP çağırmaz. 
+> Ayrıntı: [COLMAP_FREE_ARCHITECTURE.md](COLMAP_FREE_ARCHITECTURE.md).
+
 # Mimari ve bilimsel sınırlar
 
 ## Problemin tanımı

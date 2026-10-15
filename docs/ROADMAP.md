@@ -1,3 +1,8 @@
+> **2026-10-15 native dalı notu:** COLMAP bağımlılığından ayrışma N0–N3
+> kod çalışması açılmıştır. N1 kamera testleri ve N2/N3 deneysel pipeline mevcut;
+> gerçek cihaz, gerçek sahne, BA, yoğun MVS ve ölçüm kabulü tamamlanmamıştır.
+> Aşağıdaki önceki plan tarihsel referanstır, yeni üretim iş akışı değildir.
+
 # MonoScan11 yol haritası — Windows öncelikli
 
 | Aşama | Kapsam | Durum |

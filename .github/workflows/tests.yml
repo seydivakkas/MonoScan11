@@ -18,10 +18,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install native CPU dependencies
+        run: python -m pip install -r requirements-native.txt
       - name: Unit tests (no Xcode / no COLMAP required)
         run: python -m unittest discover -s tests -v
       - name: Python syntax
-        run: python -m compileall -q tools tests scripts
+        run: python -m compileall -q tools monoscan_core tests scripts
   swift-foundation:
     name: Linux Swift core / ZIP format contract
     runs-on: ubuntu-latest

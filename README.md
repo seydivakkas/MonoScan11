@@ -1,10 +1,10 @@
-# MonoScan11
+# MonoScan11\n\n> **Native SfM geliştirme dalı (N0–N3):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
 
 **LiDAR'sız iPhone 11 için kamera tabanlı 3D rekonstrüksiyon araştırma projesi**
 
 **Sürüm:** `v0.2.0-alpha` · **Lisans:** MIT · **Çalışma ilkesi:** yerel/offline-first · **Durum:** Windows Python araçları ve taşınabilir Swift veri/ZIP çekirdeği test edildi; SwiftUI kaynak ekranları hazır; Xcode derlemesi ve gerçek cihaz kabulü bekliyor.
 
-MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açısından fotoğraf kullanarak görüntü eşleştirme, **Structure from Motion (SfM)**, **Multi-View Stereo (MVS)** ve üçgenleme (triangulation) teknikleriyle 3D geometri üretmeyi hedefler. COLMAP, yoğun modelleme için ayrı kurulan açık kaynak bir araçtır. LiDAR donanımı veya garantili metrik doğruluk gerekmez; ölçüm iddiaları bağımsız değerlendirmeye tabidir.
+MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açısından fotoğraf kullanarak görüntü eşleştirme, **Structure from Motion (SfM)**, **Multi-View Stereo (MVS)** ve üçgenleme (triangulation) teknikleriyle 3D geometri üretmeyi hedefler. Bu geliştirme dalında rekonstrüksiyon için harici COLMAP kurulumu gerekmez; native SfM yalnızca deneysel seviyededir. LiDAR donanımı veya garantili metrik doğruluk gerekmez; ölçüm iddiaları bağımsız değerlendirmeye tabidir.
 
 ## Gerçek durum (yayınlamadan önce okuyun)
 
@@ -89,36 +89,22 @@ python tools/monoscan.py validate "C:\scan-data\ilk-nesne"
 
 ARKit kaydı olmadan da bu yöntem çalışabilir; çünkü SfM kamera pozlarını fotoğraflardan tahmin eder. Bu, aynı fotoğraflar ile COLMAP'de gerçek başarılı model üretildiğinin kanıtı **değildir**; onu ayrıca çalıştırıp test edeceğiz.
 
-## 3. COLMAP ile fotoğraftan 3D model deneyi (Windows)
-
-COLMAP'i **ayrı olarak** [resmî GitHub sürümlerinden](https://github.com/colmap/colmap/releases) kur. CLI yolunu `COLMAP.bat` (kuruluma göre değişebilir) olarak belirt. CPU ile ilk sparse/SfM deneyine başla:
+## 3. MonoScan11 native SfM ile deneysel rekonstrüksiyon (Windows)
 
 ```powershell
-python tools/monoscan.py reconstruct "C:\scan-data\ilk-nesne" --colmap "C:\COLMAP\COLMAP.bat" --mode sparse --dry-run
-python tools/monoscan.py reconstruct "C:\scan-data\ilk-nesne" --colmap "C:\COLMAP\COLMAP.bat" --mode sparse
+python -m pip install -r requirements-native.txt
+python tools/monoscan.py validate "C:\scan-data\ilk-nesne"
+python tools/monoscan.py reconstruct "C:\scan-data\ilk-nesne" --mode photo-only --focal-px 1800
 ```
 
-Çıktı oluştuğunda (ve sparse/0 gerçekten mevcutsa):
+`1800` örnektir, **kendi görüntülerinize ait kalibrasyon değeri değildir**.
+`session.json` içindeki gerçek `K` varsa `--focal-px` gerekmez.
+Arşivin orijinal görüntü ve veri dosyaları hiçbir zaman üzerine yazılmaz.
 
-```powershell
-python tools/monoscan.py inspect "C:\scan-data\ilk-nesne" --export-ply "C:\scan-data\ilk-nesne\sparse-cloud.ply"
-```
-
-Beklenen dosyalar:
-
-```text
-ilk-nesne/
-├── images/                 # Girdi fotoğrafları, özel veri: GitHub'a ekleme
-├── reconstruction/
-│   ├── database.db         # COLMAP eşleme veritabanı
-│   ├── sparse/0/           # cameras.bin, images.bin, points3D.bin
-│   └── summary.json        # Kayıtlı görüntü/nokta/reprojeksiyon özeti
-└── sparse-cloud.ply        # Açıkça istenirse yazılır
-```
-
-**İlk denemede** `sparse` kullan; dense MVS için uyumlu CUDA/NVIDIA yapılandırması ve yeterli GPU belleği gereksinimini ayrıca değerlendir. `--gpu --mode dense` daha sonraki aşama içindir ve bu depoda gerçek donanımda doğrulanmadı. Bir tarama klasöründe `reconstruction` doluysa yazılım verileri otomatik silmez; yeni bir klasör kullan. `single_camera=1` varsayımı nedeniyle çekim boyunca **aynı fiziksel lensi** kullan.
-
-COLMAP bir sahnede görüntüleri eşleştiremez veya model oluşturamazsa bu deney **FAIL** sayılır. Program durdurulur; yapay başarı raporu oluşturulmaz.
+İşlem başarıyla sonuçlanırsa `reconstruction/runs/run-*/` altında
+`sparse.ply`, `cameras.json`, `tracks.json`, `summary.json` oluşur.
+Üçten fazla fotoğrafta yalnız bir alt küme kaydedilebildiyse `PARTIAL` yazılır.
+Gerçek veri, bağımsız ölçüm doğruluğu, dense MVS ve bundle adjustment **bekliyor**.
 
 ## 4. Mimari
 

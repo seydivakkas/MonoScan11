@@ -1,21 +1,14 @@
-"""MonoScan11: offline iPhone photo/session validator and COLMAP runner.
-
-Python standard library only. COLMAP is an optional, independently installed
-binary. No phone photos are uploaded; ARKit poses are NOT fed to COLMAP yet.
-"""
+"""MonoScan11 offline session validation, geometry demo and native SfM CLI."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import math
-import shutil
 import struct
-import subprocess
 import sys
 from pathlib import Path
 
-from colmap_models import ModelError, export_ply, inspect_model
 from geometry import GeometryError, synthetic_demo
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png"}
@@ -189,116 +182,62 @@ def validate(root: Path) -> dict:
         "image_formats": {ext: sum(p.suffix.lower() == ext for p in files) for ext in sorted({p.suffix.lower() for p in files})},
         "image_total_mb": round(sum(p.stat().st_size for p in files) / 1_048_576, 3),
         "warnings": warnings,
-        "arkit_poses_used_by_colmap": False,
+        "arkit_poses_used_by_native": False,
     }
 
 
-def commands_for(root: Path, work: Path, colmap: str, mode: str, gpu: bool) -> list[list[str]]:
-    images = str(root / "images")
-    db = str(work / "database.db")
-    sparse = str(work / "sparse")
-    dense = str(work / "dense")
-    commands = [
-        [colmap, "feature_extractor", "--database_path", db, "--image_path", images,
-         "--ImageReader.single_camera", "1", "--FeatureExtraction.use_gpu", "1" if gpu else "0"],
-        [colmap, "exhaustive_matcher", "--database_path", db,
-         "--FeatureMatching.use_gpu", "1" if gpu else "0"],
-        [colmap, "mapper", "--database_path", db, "--image_path", images,
-         "--output_path", sparse],
-    ]
-    if mode == "dense":
-        commands.extend([
-            [colmap, "image_undistorter", "--image_path", images,
-             "--input_path", str(work / "sparse" / "0"), "--output_path", dense,
-             "--output_type", "COLMAP", "--max_image_size", "2000"],
-            [colmap, "patch_match_stereo", "--workspace_path", dense,
-             "--workspace_format", "COLMAP", "--PatchMatchStereo.geom_consistency", "true"],
-            [colmap, "stereo_fusion", "--workspace_path", dense,
-             "--workspace_format", "COLMAP", "--input_type", "geometric",
-             "--output_path", str(work / "fused.ply")],
-            [colmap, "poisson_mesher", "--input_path", str(work / "fused.ply"),
-             "--output_path", str(work / "mesh.ply")],
-        ])
-    return commands
-
-
-def reconstruct(root: Path, *, colmap: str, mode: str, gpu: bool, dry_run: bool) -> list[list[str]]:
-    root = root.resolve()
-    validate(root)
-    work = root / "reconstruction"
-    commands = commands_for(root, work, colmap, mode, gpu)
-    if dry_run:
-        for cmd in commands:
-            print(subprocess.list2cmdline(cmd))
-        return commands
-    if mode == "dense" and not gpu:
-        raise SessionError("Dense MVS için uygun CUDA/GPU kurulumu doğrulanmalı; önce --mode sparse kullanın.")
-    if not Path(colmap).is_file() and shutil.which(colmap) is None:
-        raise SessionError("COLMAP bulunamadı. --colmap ile COLMAP.bat tam yolunu belirtin.")
-    if work.exists() and any(work.iterdir()):
-        raise SessionError("reconstruction klasörü dolu; mevcut sonuçlar silinmesin diye işlem durduruldu.")
-    work.mkdir(exist_ok=True)
-    (work / "sparse").mkdir(exist_ok=True)
-    for i, cmd in enumerate(commands):
-        if mode == "dense" and i == 3 and not (work / "sparse" / "0").is_dir():
-            raise SessionError("Seyrek COLMAP modeli sparse/0 altında bulunamadı; dense durduruldu.")
-        print(f"[{i + 1}/{len(commands)}] {cmd[1]}", flush=True)
-        subprocess.run(cmd, check=True)
-        if i == 2 and not (work / "sparse" / "0" / "points3D.bin").is_file():
-            raise SessionError("COLMAP geçerli bir sparse/0 modeli oluşturmadı (nokta dosyası yok).")
-    try:
-        report = inspect_model(work / "sparse" / "0")
-    except (ModelError, OSError) as exc:
-        raise SessionError(f"COLMAP çıktı modeli incelenemedi: {exc}") from exc
-    if report["registered_images"] < 2 or report["point_count"] == 0:
-        raise SessionError("COLMAP yeterli sahne modeli oluşturamadı (en az iki kamera ve bir 3D nokta gerekli).")
-    (work / "summary.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    return commands
-
-
-def _model_dir(argument: Path) -> Path:
-    path = argument.resolve()
-    if (path / "images.bin").exists():
-        return path
-    return path / "reconstruction" / "sparse" / "0"
-
-
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="MonoScan11 offline Windows SfM/3D araçları")
-    sub = parser.add_subparsers(dest="action", required=True)
-    val = sub.add_parser("validate", help="Görüntüleri ve isteğe bağlı ARKit manifestini doğrula")
+    """Legacy entrypoint retained for validate/demo; reconstruction is native."""
+    parser = argparse.ArgumentParser(description="MonoScan11 yerel, COLMAP'sız SfM araçları")
+    subs = parser.add_subparsers(dest="action", required=True)
+    val = subs.add_parser("validate", help="Fotoğrafları ve ARKit manifestini doğrula")
     val.add_argument("session", type=Path)
-    rec = sub.add_parser("reconstruct", help="COLMAP ile gerçek fotoğraflardan SfM/MVS çalıştır")
+    rec = subs.add_parser("reconstruct", help="MonoScan11 native SfM (photo-only experimental)")
     rec.add_argument("session", type=Path)
-    rec.add_argument("--colmap", default="colmap", help="Örn: C:\\COLMAP\\COLMAP.bat")
-    rec.add_argument("--mode", choices=["sparse", "dense"], default="sparse")
-    rec.add_argument("--gpu", action="store_true", help="CUDA destekli GPU özellik çıkarımı/eşleme")
-    rec.add_argument("--dry-run", action="store_true", help="Dosya değiştirmeden komutları göster")
-    ins = sub.add_parser("inspect", help="COLMAP sparse çıktısındaki kayıtlı kare/nokta sayısını göster")
-    ins.add_argument("session_or_model", type=Path)
-    ins.add_argument("--export-ply", type=Path, help="3D görüntüleyicide açmak için PLY oluştur")
-    demo = sub.add_parser("demo", help="Gerçek tarama değil, iki kamera triangulation sentetik deneyi")
+    rec.add_argument("--mode", choices=["photo-only"], default="photo-only")
+    rec.add_argument("--focal-px", type=float, default=None,
+                     help="session.json yoksa kalibre edilmiş odak uzunluğu (piksel)")
+    rec.add_argument("--dry-run", action="store_true")
+    ins = subs.add_parser("inspect", help="Native rekonstrüksiyon klasörü özetini oku")
+    ins.add_argument("run", type=Path)
+    demo = subs.add_parser("demo", help="Sentetik iki-kamera geometri demosu")
     demo.add_argument("output", type=Path)
     args = parser.parse_args(argv)
     try:
         if args.action == "validate":
             result = validate(args.session)
         elif args.action == "reconstruct":
-            reconstruct(args.session, colmap=args.colmap, mode=args.mode,
-                        gpu=args.gpu, dry_run=args.dry_run)
+            result = validate(args.session)
+            if args.dry_run:
+                print(json.dumps({"engine": "monoscan-native", "mode": args.mode,
+                                  "input_images": result["images"], "executed": False},
+                                 indent=2, ensure_ascii=False))
+                return 0
+            # Import only for reconstruction; validate/demo keep their Python-stdlib contract.
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+            from monoscan_core.reconstruction import ReconstructionError, reconstruct
+            from monoscan_core.vision import VisionError
+            from monoscan_core.camera import CameraGeometryError
+            try:
+                output, summary = reconstruct(args.session, focal_px=args.focal_px)
+            except (ReconstructionError, VisionError, CameraGeometryError) as exc:
+                raise SessionError(str(exc)) from exc
+            print(json.dumps({"run": str(output), **summary}, indent=2, ensure_ascii=False))
             return 0
         elif args.action == "inspect":
-            folder = _model_dir(args.session_or_model)
-            result = inspect_model(folder)
-            if args.export_ply:
-                export_ply(folder, args.export_ply)
-                result["exported_ply"] = str(args.export_ply)
+            folder = args.run.resolve()
+            if not folder.is_dir() or not all((folder / p).is_file()
+                    for p in ("summary.json", "cameras.json", "tracks.json", "sparse.ply")):
+                raise SessionError("Native model output incomplete; pass explicit run directory")
+            result = json.loads((folder / "summary.json").read_text(encoding="utf-8"))
+            if result.get("engine") != "monoscan-native":
+                raise SessionError("Output does not belong to MonoScan11 native engine")
         else:
             if any((args.output / name).exists() for name in ("synthetic_points.ply", "metrics.json")):
                 raise SessionError("Demo çıktıları zaten var; üzerine yazılmadı")
             result = synthetic_demo(args.output)
         print(json.dumps(result, ensure_ascii=False, indent=2))
-    except (SessionError, GeometryError, ModelError, subprocess.CalledProcessError, OSError) as exc:
+    except (SessionError, GeometryError, OSError, ValueError) as exc:
         print(f"HATA: {exc}", file=sys.stderr)
         return 1
     return 0
