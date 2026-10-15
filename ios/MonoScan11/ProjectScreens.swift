@@ -251,7 +251,7 @@ struct ExportScreen: View {
                     Label("project.json — Proje bilgileri", systemImage: "folder")
                 }
             }
-            Notice(text: "Paket Windows bilgisayarına aktarılıp COLMAP ile işlenebilir. ZIP dosyası sıkıştırmasızdır.")
+            Notice(text: "Paket Windows'a aktarılıp MonoScan11'in deneysel yerel SfM motoruyla işlenebilir. ZIP sıkıştırmasızdır.")
             if let url {
                 Notice(text: "ZIP oluşturuldu: \(url.lastPathComponent)", symbol: "checkmark.circle")
                 MSButton(title: "Dosyalara Kaydet / Paylaş", systemImage: "square.and.arrow.up") { showShare = true }
