@@ -1,18 +1,35 @@
-> **2026-10-15 native dalı notu:** COLMAP bağımlılığından ayrışma N0–N3
-> kod çalışması açılmıştır. N1 kamera testleri ve N2/N3 deneysel pipeline mevcut;
-> gerçek cihaz, gerçek sahne, BA, yoğun MVS ve ölçüm kabulü tamamlanmamıştır.
-> Aşağıdaki önceki plan tarihsel referanstır, yeni üretim iş akışı değildir.
+# MonoScan11 — COLMAP'sız geliştirme yol haritası
 
-# MonoScan11 yol haritası — Windows öncelikli
+**Karar: 16 Ekim 2026 · çalışma dalı:** `feature/native-sfm-n0-n3`
+**Öncelik:** Tüm modüller ve arayüzleri önce tamamla; **gerçek fotoğraf analizi, gerçek iPhone 11 ile çekim, sahada ölçüm ve bağımsız gerçek veri kabulü en son (N9)**.
 
-| Aşama | Kapsam | Durum |
-|---|---|---|
-| P0 | Kod tabanı, sentetik triangulation, fotoğraf/manifest validasyonu, COLMAP runner, otomatik testler, GitHub CI | **Kod tamam / yerel Python test PASS** |
-| P1-WIN | Windows'ta gerçek iPhone 11 fotoğraflarıyla COLMAP sparse, sonuç raporu, örnek benchmark; blur/örtüşme analizi | **Gerçek veri bekliyor** |
-| P1-DENSE | Uygun GPU varsa dense MVS, fused PLY ve mesh; sparse baseline ile karşılaştırma | **Donanım doğrulaması bekliyor** |
-| P2-IOS | XcodeGen/Xcode build, iPhone 11 ARKit yaşam döngüsü, 30+ RGB/pose yakalama, dosya aktarımı | **En son aşama: macOS gerekli** |
-| P3-FUSION | ARKit VIO ile SfM pozları Sim(3) hizalama, hareket belirsizliği, ön/arka kamera ve kalibrasyon denetimleri | **P2 sonrası** |
-| P4-QUALITY | 3 sahnede kalibre edilmiş referanslar, metrik hata, tekrar edilebilirlik, kullanıcı kabulü | **Gerçek deney bekliyor** |
-| P5-RELEASE | iOS dağıtım paketi, stabil sürüm ve sahadan kabul kanıtı | **Hepsi PASS olmadan yapılmayacak** |
+## Yürürlükteki geliştirme sırası
 
-Açık işlerin tek kaynağı [`SON_ASAMAYA_BIRAKILANLAR.md`](SON_ASAMAYA_BIRAKILANLAR.md) ve [`VALIDATION_PLAN.md`](VALIDATION_PLAN.md).
+| Aşama | Mühendislik çıktısı | Gerçek fotoğraf kullanılacak mı? | Bitirme / kapı koşulu |
+|---|---|---|---|
+| N0 | Yerel (native) çekirdek; COLMAP üretim bağımlılığından ayrıştırma | Hayır | Dış COLMAP çalıştırma yok; eski veri biçimleri üretim sözleşmesi değil |
+| N1 | Kamera modeli, intrinsics, rotasyonlar, ARKit/CV koordinat dönüşümleri | Hayır | Sayısal ve sentetik koordinat birim testleri |
+| N2 | SIFT/özellik eşleştirme, reciprocal match, geometrik aykırı değer elemesi | Hayır | Sentetik doku/özellik eşleştirme testleri |
+| N3 | Yerel seyrek SfM: başlangıç çifti, kamera kaydı, PnP, triangulation, tracks | Hayır | Sentetik çoklu-görüş ve başarısızlık testleri; gerçek başarı iddiası yok |
+| **N4** | ARKit VIO pozlarının güvenli kullanımı, koordinat hizalama ve poz öncülleri (priors) | **Hayır** | Sentetik `session.json`, yapay kamera pozları ve Sim(3) testleri; fotoğraf bazlı/ARKit'li modlar net ayrılmalı |
+| **N5** | Sparse Bundle Adjustment, aykırı nokta temizliği, reprojeksiyon/poz hata göstergeleri | **Hayır** | Bilinen sentetik 3B sahnede yakınsama, degenerate vaka ve regresyon testleri |
+| **N6** | Yoğun derinlik (MVS), derinlik füzyonu, yüzey/mesh ve geometri dışa aktarımı | **Hayır** | Sentetik ve lisanslı, programatik üretilen sahnelerde PLY/OBJ/mesh yapısal testleri |
+| **N7** | Windows komutları, hata akışı, 3B önizleme/raporlama, iOS ekran/ZIP ve veri sözleşmesi bütünleşmesi | **Hayır** | UI sözleşmeleri, sahte veri göstermeme, offline/hata kurtarma kontrolü |
+| **N8** | Sentetik uçtan uca regresyon, Windows/Linux CI, kaynak güvenliği, paketleme hazırlığı, performans profilleme | **Hayır** | Örneklemeye bağımlı olmayan test seti, sürüm/bağımlılık kontrolü; gerçek sonuç iddiası yok |
+| **N9 — SON** | Gerçek iPhone 11/Xcode derlemesi ve cihaz kabulü, gerçek RGB+ARKit çekimi, **ilk gerçek fotoğraf analizi**, bağımsız referansla ölçüm doğrulaması, saha performansı ve kullanıcı kabulü | **Evet, yalnızca burada** | Veri/izlenebilirlik, görsel geometri, cihaz ve metrik hatalar kayıtlı; başarısızlık açıkça raporlanmalı |
+
+**N0–N3:** Kodlanmış deneysel temel var; sentetik CI bulguları gerçek dünya doğruluğunu kanıtlamaz.
+**N4–N8:** Henüz tamamlanmış kabul edilmez; geliştirme yapılacak.
+**N9:** Bilinçli olarak ertelendi. Hiçbir erken aşamada kullanıcıdan fotoğraf isteme, gerçek sahne deneyi veya gerçek fotoğraf üzerinden model performansı iddiası oluşturma.
+
+## Ara aşama doğrulama standardı
+
+- **İzinli:** Analitik hesap, prosedürel sentetik görüntü, programatik/sentetik kamera pozları, mock ARKit manifesti, bağımsız birim testleri, CI, dosya sözleşmeleri, güvenlik/kod incelemesi, sentetik hız/bellek denemesi.
+- **Ertelenen:** Gerçek çekim, kullanıcının gerçek fotoğrafları, internetten alınmış gerçek sahne veri setiyle rekonstrüksiyon deneyi, gerçek iPhone cihaz testi, gerçek odanın ölçülmesi, metrik hassasiyet değerlendirmesi.
+- **Yasak iddia:** Yalnız sentetik testlerden `real_world_validated=true`, "milimetre doğruluk", "LiDAR eşdeğeri", tamamlanmış dense/mesh veya sahada başarılı tarama sonucu türetilmez.
+- **Kod entegrasyonu:** N0–N8 kodu CI + gözden geçirme ile birleştirilebilir, fakat **gerçek dünyada doğrulanmış/stable sürüm** N9 kabulü olmadan yayımlanmaz.
+- **Geriye uyumluluk:** iOS 18 ekran ailesi, ZIP/manifest sürüm-1 sözleşmesi, orijinal görüntüleri değiştirmeme, tekrar kullanılabilir kendi SFm motoru ve ağsız çalışma korunur.
+
+## Önceden kullanılan yol haritası
+
+`docs/SON_ASAMAYA_BIRAKILANLAR.md` ve ilk P0–P5 planı **tarihsel belgelerdir**, geçerli geliştirme sırasını belirlemez. Öncelik çatışması varsa bu dosyadaki **N0–N9** sırası ve `docs/COLMAP_FREE_ARCHITECTURE.md` esas alınır.
