@@ -42,7 +42,7 @@
 - Oturum başladıktan sonra uygulama kesintisi, ani kapanma, ısınma/düşük bellek, depolama dolması ve kısmi ZIP dosyalarının temizlenmesi için cihaz testleri gerekebilir.
 - Taslak oturumun kaldığı yerden sürdürülmesi veya birleştirilmesi henüz uygulanmadı.
 - `RecoveryScreen` duruma özgü ortak bileşendir; bütün hata türlerinin bağlama uygun UI geçişleri hâlâ tamamlanmadı.
-- Bulanıklık, örtüşme, ışık, kapsama yüzdesi, metrik mesafe, dense mesh, ARKit–COLMAP hizalaması bu sürümde yoktur.
+- Bulanıklık, örtüşme, ışık, kapsama yüzdesi, metrik mesafe, dense mesh, ARKit–native SfM hizalaması bu sürümde yoktur.
 - iPhone gerçek UI ekran görüntüsü, derleme başarısı, kamera izin reddi ve ARKit takip/lens koşulları kanıtları henüz yoktur.
 
 ## Test komutları (Windows/Mac gerekmez)
