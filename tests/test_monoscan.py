@@ -127,6 +127,11 @@ class SessionTests(unittest.TestCase):
         payload = json.loads(output.getvalue().decode("cp1252"))
         self.assertEqual(payload["images"], 3)
 
+    def test_arkit_guided_dry_run_requires_session(self):
+        self.assertEqual(main(["reconstruct", str(self.root), "--mode",
+                               "arkit-guided", "--dry-run"]), 1)
+        self.assertFalse((self.root / "reconstruction").exists())
+
     def test_png_header(self):
         self.assertEqual(image_dimensions(self.root / "images" / "frame_0000.png"), (16, 12))
 
