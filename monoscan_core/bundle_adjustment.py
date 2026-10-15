@@ -265,7 +265,9 @@ def bundle_adjust(run, *, prior_weight=2.0, max_nfev=70, f_scale_px=2.0):
                            max_nfev=max_nfev, x_scale="jac")
     if not np.isfinite(result.x).all() or not np.isfinite(result.cost):
         raise BundleAdjustmentError("Optimizer produced nonfinite parameters")
-    if not result.success:
+    # A valid improvement after a finite evaluation budget is recorded as
+    # PARTIAL, never as a successfully converged BA result.
+    if not result.success and result.nfev < 10:
         raise BundleAdjustmentError("BA did not converge within the configured iteration budget")
     optimized_poses, optimized_points = unpack(result.x)
     after_px, after_z = _rodrigues_projection(optimized_poses, optimized_points,
@@ -283,6 +285,8 @@ def bundle_adjust(run, *, prior_weight=2.0, max_nfev=70, f_scale_px=2.0):
     # Ensure the optimization actually improved robust objective or no actual change.
     if result.cost > 0.5 * float(np.dot(residual(x0), residual(x0))) + 1e-6:
         raise BundleAdjustmentError("BA unexpectedly increased initial objective")
+    if not result.success and float(np.median(after)) >= 0.95 * float(np.median(before)):
+        raise BundleAdjustmentError("BA did not converge and improvement is insufficient")
 
     pose_out = []
     for i, original in enumerate(model["original_cameras"]):
@@ -307,9 +311,10 @@ def bundle_adjust(run, *, prior_weight=2.0, max_nfev=70, f_scale_px=2.0):
     summary = dict(source_summary)
     summary.update({
         "stage": "N5 experimental sparse BA; synthetic acceptance only",
-        "bundle_adjustment": "applied",
+        "state": source_summary.get("state", "PARTIAL") if result.success else "PARTIAL",
+        "bundle_adjustment": "applied" if result.success else "partial_nonconverged",
         "bundle_adjustment_method": "scipy_trf_sparse_soft_l1",
-        "bundle_adjustment_optimizer_success": True,
+        "bundle_adjustment_optimizer_success": bool(result.success),
         "bundle_adjustment_message": str(result.message),
         "bundle_adjustment_function_evals": int(result.nfev),
         "bundle_adjustment_first_camera_fixed": names[0],
@@ -333,7 +338,11 @@ def bundle_adjust(run, *, prior_weight=2.0, max_nfev=70, f_scale_px=2.0):
         "real_world_validated": False,
         "real_world_test_stage": "N9",
         "source_model_sha256": model["source_sha256"],
-        "warnings": list(source_summary.get("warnings", [])) + [
+        "warnings": list(source_summary.get("warnings", [])) + (
+            [] if result.success else [
+                "N5 optimizer reached the evaluation limit; optimization is PARTIAL, not converged."
+            ]
+        ) + [
             "Bundle adjustment residuals are internal reprojection statistics, not real accuracy.",
             "ARKit VIO covariance is unknown; priors are heuristic, not measured confidence.",
             "Physical iPhone/camera/lens and real photo acceptance are deferred to N9.",
