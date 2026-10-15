@@ -33,7 +33,7 @@
 - **Kamera/ARKit:** `frame.camera.intrinsics`, `frame.camera.transform` ve `rawFeaturePoints` aynı oturumda toplanır. Arka LiDAR derinliği kullanılmaz. Tek oturumdaki ARKit koordinat sistemi korunur; çekim kontrolü kamera görünümünü kaldırmaz.
 - **Saklama:** `Documents/Scans/<UUID>/project.json`, `session.json`, `images/`, `arkit_sparse.ply`. Uygulama tarafından oluşturulmayan sahte proje doldurulmaz. Çekim tamamlanmadan taslak proje kalabilir.
 - **Dışa aktarma:** `Documents/Exports/<UUID>-<nonce>.zip`, ZIP32 *store* yöntemi, CRC32, sürüm 1 JSON ve fotoğraflar. Kullanıcı Share Sheet ile Files/AirDrop vb. kullanır. Eski ZIP üzerine otomatik yazılmaz. Ses, konum, bulut/API veya reklam SDK'sı yok.
-- **Windows uyumu:** `session.json` korunur ve `tools/monoscan.py validate <folder>` ile doğrulanır. Python COLMAP komutları `arkit_poses_used_by_colmap = false`; henüz poz füzyonu **yapılmıyor**.
+- **Windows uyumu:** `session.json` korunur ve `tools/monoscan.py validate <folder>` ile doğrulanır. Native SfM motoru \`PHOTO_ONLY\` çalışır; henüz ARKit poz füzyonu **yapılmıyor**.
 
 ## Açık kısıtlar / sıradaki kod işleri
 
