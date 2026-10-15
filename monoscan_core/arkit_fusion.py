@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .camera import CameraGeometryError, arkit_to_cv_pose, intrinsics
+from .camera import CameraGeometryError, arkit_to_cv_pose, camera_to_world, intrinsics
 
 
 class ARKitFusionError(ValueError):
@@ -131,8 +131,13 @@ def align_pose_centers(source: dict[str, np.ndarray], priors: dict[str, PosePrio
     names = sorted(set(source) & set(priors))
     if len(names) < min_correspondences or min_correspondences < 4:
         raise ARKitFusionError("At least 4 paired camera centers required")
-    src = np.asarray([np.asarray(source[n], dtype=float)[:3, 3] for n in names])
-    dst = np.asarray([priors[n].cv_camera_to_world[:3, 3] for n in names])
+    try:
+        src_poses = [camera_to_world(source[n]) for n in names]
+        target_poses = [camera_to_world(priors[n].cv_camera_to_world) for n in names]
+    except CameraGeometryError as exc:
+        raise ARKitFusionError("Invalid input camera orientation") from exc
+    src = np.asarray([pose[:3, 3] for pose in src_poses])
+    dst = np.asarray([pose[:3, 3] for pose in target_poses])
     if not np.isfinite(src).all() or not np.isfinite(dst).all():
         raise ARKitFusionError("Nonfinite pose center")
     extent = float(np.max(np.linalg.norm(dst[:, None] - dst[None, :], axis=2)))
@@ -172,6 +177,14 @@ def align_pose_centers(source: dict[str, np.ndarray], priors: dict[str, PosePrio
         raise ARKitFusionError("Unstable Sim(3) refinement")
     if int(np.sum(accepted)) / len(names) < 0.65:
         raise ARKitFusionError("Excessive pose outliers")
+    # Orientation diagnostics are independent of center-only RANSAC.
+    # Never label the angular residual an IMU/VIO sensor sigma.
+    orientation_angles = {}
+    for name, sp, tp in zip(names, src_poses, target_poses):
+        predicted = r @ sp[:3, :3]
+        relative = tp[:3, :3].T @ predicted
+        cos_angle = np.clip((float(np.trace(relative)) - 1.0) / 2.0, -1, 1)
+        orientation_angles[name] = float(np.degrees(np.arccos(cos_angle)))
     return {
         "source_convention": "PHOTO_ONLY CV +Z camera, arbitrary SfM world",
         "target_convention": "ARKit world, CV camera axes, nominal meters",
@@ -182,6 +195,11 @@ def align_pose_centers(source: dict[str, np.ndarray], priors: dict[str, PosePrio
         "pose_center_residual_by_image_nominal_m": {
             n: float(v) for n, v in zip(names, residual)
         },
+        "orientation_residual_by_image_deg": orientation_angles,
+        "median_inlier_orientation_residual_deg": float(
+            np.median([orientation_angles[n] for n, ok in zip(names, accepted) if ok])
+        ),
+        "orientation_used_to_fit_alignment": False,
         "median_inlier_residual_nominal_m": float(np.median(residual[accepted])),
         "max_inlier_residual_nominal_m": float(np.max(residual[accepted])),
         "consensus_tolerance_nominal_m": tolerance,
