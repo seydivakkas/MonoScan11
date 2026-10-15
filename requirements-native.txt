@@ -1,0 +1,4 @@
+# Offline CPU-only native SfM prototype, not a COLMAP wrapper.
+# Pin exact versions in the release lockfile after Windows wheel/license review.
+numpy>=1.26,<3
+opencv-python-headless>=4.8,<5
