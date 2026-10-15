@@ -161,6 +161,25 @@ def reconstruct_arkit_guided(root: Path):
     ]
     if not residuals or not np.isfinite(residuals).all():
         raise ReconstructionError("Invalid ARKit reprojection diagnostics")
+    per_camera_reprojection = {}
+    for idx, obs in final_obs.items():
+        local_residuals = [
+            float(np.linalg.norm(
+                project([result_points[pid]["xyz"]], frames[idx].k, poses[idx])[0]
+                - frames[idx].points[kp]
+            ))
+            for kp, pid in obs.items()
+        ]
+        per_camera_reprojection[idx] = {
+            "observation_count": len(local_residuals),
+            "median_reprojection_error_px": (
+                float(np.median(local_residuals)) if local_residuals else None
+            ),
+            "mean_reprojection_error_px": (
+                float(np.mean(local_residuals)) if local_residuals else None
+            ),
+            "sensor_pose_covariance_known": False,
+        }
     tracking_unknown = [name for name in ordered if priors[name].tracking_state == "unreported"]
     summary = {
         "engine": "monoscan-native",
@@ -207,6 +226,8 @@ def reconstruct_arkit_guided(root: Path):
                 "tracking_state": priors[ordered[idx]].tracking_state,
                 "translation_sigma_m": None,
                 "rotation_sigma_deg": None,
+                "pose_quality_basis": "geometric_reprojection_only_not_covariance",
+                "pose_diagnostics": per_camera_reprojection[idx],
             }
             for idx in sorted(registered)
         ]
