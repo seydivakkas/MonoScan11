@@ -38,7 +38,7 @@ Bu görsel UI-P2 SwiftUI kodlamasının birincil görsel referansıdır. Kalan d
 3. **Kayıt:** Sayaç yalnız başarıyla kaydedilen kareyle artar.
 4. **Önizleme:** ARKit'in gerçekten kayıtlı `rawFeaturePoints` verisi yoksa nokta bulutu yerine boş durum gösterilir.
 5. **Dışa aktarım:** Başarılı ZIP doğrulaması olmadan paylaşma ekranı gösterilmez.
-6. **İşlem:** Tam SfM/MVS rekonstrüksiyonu iPhone ekranında değil Windows/COLMAP safhasında yapılır.
+6. **İşlem:** Tam SfM/MVS rekonstrüksiyonu iPhone ekranında değil Windows/MonoScan11 yerel SfM safhasında yapılır.
 
 ## PNG'leri yeniden üretme
 
