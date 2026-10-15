@@ -33,3 +33,7 @@ x right y down +z forward. ARKit x right y up -z forward. Matrix conversion:
 `T_cvCamera_to_arkitWorld = T_arkitCamera_to_arkitWorld @ diag(1,-1,-1,1)`.
 A camera pose is not equivalent to a world-coordinate basis conversion.
 Input intrinsics K belong to the exact image buffer dimensions and orientation.
+
+N1/N3 implementation limit: camera projection currently assumes undistorted
+pixel coordinates. Lens distortion calibration/correction and EXIF rotations
+have NOT yet been accepted on a real iPhone. Do not market 3D accuracy.
