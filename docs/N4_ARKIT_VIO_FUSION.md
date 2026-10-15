@@ -7,7 +7,7 @@ calibration, real imagery and physical accuracy acceptance are reserved for N9.
 
 - `monoscan_core/arkit_fusion.py`: strict session.json v1 pose priors, explicit
   CV +Z / ARKit -Z camera frame conversion, no fabricated covariance,
-  deterministic robust Sim(3) alignment diagnostics for PHOTO_ONLY camera centers.
+  deterministic robust Sim(3) alignment diagnostics for PHOTO_ONLY camera centers and independent orientation disagreement reports.
 - `monoscan_core/arkit_guided.py`: opt-in triangulation in ARKit world using
   reciprocal SIFT matches, geometric cheirality/parallax/reprojection checks;
   projects existing landmarks before expanding tracks; rejects conflicts;
@@ -25,12 +25,12 @@ calibration, real imagery and physical accuracy acceptance are reserved for N9.
 |---|---|---|
 | `photo-only` | Native image-only essential/PnP; never silently replaced by ARKit | Arbitrary |
 | `arkit-guided` | Captured ARKit 4x4 transforms from session.json v1 | ARKit VIO nominal meters; not metrologically verified |
-| `align-arkit` | Non-mutating, diagnostic similarity alignment of PHOTO_ONLY pose centers to saved ARKit centers | Sim(3) scale + inlier/outlier residual; not independent uncertainty |
+| `align-arkit` | Non-mutating, diagnostic similarity alignment of PHOTO_ONLY pose centers to saved ARKit centers | Sim(3) scale, inlier/outlier center residual and angle disagreement; not independent uncertainty |
 
 The `align-arkit` command DOES NOT overwrite or rescale existing PHOTO_ONLY PLY
 and does not declare metric correctness. Passing different scene sessions or
 insufficient/non-collinear camera centers must fail closed. The resulting
-residuals reflect **agreement between two pose sources**, not physical truth.
+residuals reflect **agreement between two pose sources**, not physical truth. Center-based RANSAC fits translation/rotation/scale; independent per-camera orientation residuals are reported in degrees but not used to fit or certify the alignment.
 
 ## CLI
 
