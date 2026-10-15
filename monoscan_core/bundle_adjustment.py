@@ -58,8 +58,8 @@ def _read_model(run):
     cameras_raw = camera_doc.get("cameras")
     if not isinstance(cameras_raw, list) or not (2 <= len(cameras_raw) <= 150):
         raise BundleAdjustmentError("Expected 2-150 native camera records")
-    if not isinstance(tracks_raw, list) or not 24 <= len(tracks_raw) <= 200000:
-        raise BundleAdjustmentError("Insufficient or oversized track collection")
+    if not isinstance(tracks_raw, list) or not 24 <= len(tracks_raw) <= 5000:
+        raise BundleAdjustmentError("N5 supports 24-5000 landmarks per refinement; use smaller reconstruction windows")
     camera_names, ks, pose_w2c, original_cameras = [], [], [], []
     for item in cameras_raw:
         if not isinstance(item, dict) or not isinstance(item.get("image"), str):
@@ -118,7 +118,11 @@ def _read_model(run):
     visited = {0}
     stack = [0]
     while stack:
-        stack.extend(i for i in graph[stack.pop()] if i not in visited and not visited.add(i))
+        camera = stack.pop()
+        for neighbor in graph[camera]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                stack.append(neighbor)
     if len(visited) != len(camera_names):
         raise BundleAdjustmentError("Disconnected camera-track visibility graph")
     if len(observations) < 48:
@@ -261,6 +265,8 @@ def bundle_adjust(run, *, prior_weight=2.0, max_nfev=70, f_scale_px=2.0):
                            max_nfev=max_nfev, x_scale="jac")
     if not np.isfinite(result.x).all() or not np.isfinite(result.cost):
         raise BundleAdjustmentError("Optimizer produced nonfinite parameters")
+    if not result.success:
+        raise BundleAdjustmentError("BA did not converge within the configured iteration budget")
     optimized_poses, optimized_points = unpack(result.x)
     after_px, after_z = _rodrigues_projection(optimized_poses, optimized_points,
                                              ks, cam_idx, pt_idx)
@@ -303,7 +309,7 @@ def bundle_adjust(run, *, prior_weight=2.0, max_nfev=70, f_scale_px=2.0):
         "stage": "N5 experimental sparse BA; synthetic acceptance only",
         "bundle_adjustment": "applied",
         "bundle_adjustment_method": "scipy_trf_sparse_soft_l1",
-        "bundle_adjustment_optimizer_success": bool(result.success),
+        "bundle_adjustment_optimizer_success": True,
         "bundle_adjustment_message": str(result.message),
         "bundle_adjustment_function_evals": int(result.nfev),
         "bundle_adjustment_first_camera_fixed": names[0],
@@ -318,7 +324,9 @@ def bundle_adjust(run, *, prior_weight=2.0, max_nfev=70, f_scale_px=2.0):
         "pre_ba_median_reprojection_error_px": float(np.median(before)),
         "post_ba_median_reprojection_error_px": float(np.median(after)),
         "pre_ba_mean_reprojection_error_px": float(np.mean(before)),
+        "pre_ba_p90_reprojection_error_px": float(np.percentile(before, 90)),
         "post_ba_mean_reprojection_error_px": float(np.mean(after)),
+        "post_ba_p90_reprojection_error_px": float(np.percentile(after, 90)),
         "median_reprojection_error_px": float(np.median(after)),
         "mean_reprojection_error_px": float(np.mean(after)),
         "metric_scale_known": False,
