@@ -211,7 +211,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.dry_run:
                 print(json.dumps({"engine": "monoscan-native", "mode": args.mode,
                                   "input_images": result["images"], "executed": False},
-                                 indent=2, ensure_ascii=False))
+                                 indent=2, ensure_ascii=True))
                 return 0
             # Import only for reconstruction; validate/demo keep their Python-stdlib contract.
             sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -222,7 +222,7 @@ def main(argv: list[str] | None = None) -> int:
                 output, summary = reconstruct(args.session, focal_px=args.focal_px)
             except (ReconstructionError, VisionError, CameraGeometryError) as exc:
                 raise SessionError(str(exc)) from exc
-            print(json.dumps({"run": str(output), **summary}, indent=2, ensure_ascii=False))
+            print(json.dumps({"run": str(output), **summary}, indent=2, ensure_ascii=True))
             return 0
         elif args.action == "inspect":
             folder = args.run.resolve()
@@ -236,9 +236,9 @@ def main(argv: list[str] | None = None) -> int:
             if any((args.output / name).exists() for name in ("synthetic_points.ply", "metrics.json")):
                 raise SessionError("Demo çıktıları zaten var; üzerine yazılmadı")
             result = synthetic_demo(args.output)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+        print(json.dumps(result, ensure_ascii=True, indent=2))
     except (SessionError, GeometryError, OSError, ValueError) as exc:
-        print(f"HATA: {exc}", file=sys.stderr)
+        print(("HATA: " + str(exc)).encode("ascii", errors="backslashreplace").decode("ascii"), file=sys.stderr)
         return 1
     return 0
 
