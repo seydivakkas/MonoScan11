@@ -179,6 +179,9 @@ def align_pose_centers(source: dict[str, np.ndarray], priors: dict[str, PosePrio
         "inlier_count": int(np.sum(accepted)), "paired_count": len(names),
         "inlier_images": [n for n, ok in zip(names, accepted) if ok],
         "outlier_images": [n for n, ok in zip(names, accepted) if not ok],
+        "pose_center_residual_by_image_nominal_m": {
+            n: float(v) for n, v in zip(names, residual)
+        },
         "median_inlier_residual_nominal_m": float(np.median(residual[accepted])),
         "max_inlier_residual_nominal_m": float(np.max(residual[accepted])),
         "consensus_tolerance_nominal_m": tolerance,
