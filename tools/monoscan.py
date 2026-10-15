@@ -211,6 +211,10 @@ def main(argv: list[str] | None = None) -> int:
             result = validate(args.session)
         elif args.action == "reconstruct":
             result = validate(args.session)
+            if args.mode == "arkit-guided" and result["pose_records"] != result["images"]:
+                raise SessionError("arkit-guided requires complete session.json camera pose records")
+            if args.mode == "arkit-guided" and args.focal_px is not None:
+                raise SessionError("--focal-px is not accepted with arkit-guided")
             if args.dry_run:
                 print(json.dumps({"engine": "monoscan-native", "mode": args.mode,
                                   "input_images": result["images"], "executed": False},
