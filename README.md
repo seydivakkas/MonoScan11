@@ -1,4 +1,6 @@
-# MonoScan11\n\n> **Native SfM geliştirme dalı (N0–N3):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
+# MonoScan11
+
+> **Native SfM geliştirme dalı (N0–N3):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
 
 **LiDAR'sız iPhone 11 için kamera tabanlı 3D rekonstrüksiyon araştırma projesi**
 
@@ -13,8 +15,8 @@ MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açı
 | Windows / Linux Python araçları | Kaynak kodu hazır; test edildi | `python -m unittest discover -s tests -v` |
 | Sentetik iki bakışlı derinlik hesabı | Tamamlandı, deterministik demo | `python tools/monoscan.py demo demo-output` |
 | Fotoğraf / ARKit `session.json` denetimi | Otomatik test edildi | JPEG/PNG başlık, boyut, matris, poz, güvenli dosya adları |
-| COLMAP komut dizisi | Unit/integration mock ile test edildi | `--dry-run`, mock model ve `inspect` |
-| Gerçek iPhone 11 fotoğraflarından 3D rekonstrüksiyon | **Bekliyor** | Ayrı COLMAP kurulumu + gerçek çekim zorunlu |
+| MonoScan11 native SfM motoru | İlk prototip kodlandı, gerçek veri bekliyor | N1–N3 sentetik testler; gerçek fotoğraf / ölçüm kabulü yok |
+| Gerçek iPhone 11 fotoğraflarından 3D rekonstrüksiyon | **Bekliyor** | Yeni native pipeline henüz gerçek iPhone/Windows ortamında kabul edilmedi |
 | SwiftUI arayüz / iOS ARKit uygulaması | 18 ekran kodlandı; **Xcode derlenmedi** | Kaynak parse + Swift Foundation testleri; macOS/Xcode ve iPhone kabulü en sonda |
 | iOS ZIP paketinin Windows uyumu | Sentetik görüntülerle PASS | Swift ZIP32 CRC -> Python `validate` zinciri; gerçek iPhone verisi değil |
 | 3D modelin ölçüm doğruluğu | **Doğrulanmadı** | Gerçek referans metre/lazer ölçer karşılaştırması yok |
@@ -106,32 +108,24 @@ Arşivin orijinal görüntü ve veri dosyaları hiçbir zaman üzerine yazılmaz
 Üçten fazla fotoğrafta yalnız bir alt küme kaydedilebildiyse `PARTIAL` yazılır.
 Gerçek veri, bağımsız ölçüm doğruluğu, dense MVS ve bundle adjustment **bekliyor**.
 
-## 4. Mimari
+## 4. Deneysel yerel SfM mimarisi
 
 ```text
-P0 / Mac gerekmeyen geliştirme
-
-  iPhone 11 Kamera uygulaması ---> JPEG fotoğraflar
-                  |                   |
-                  v                   v
-            Windows'a kopyala --> validate --> COLMAP SfM --> sparse/0
-                                                     |
-                                                     v
-                                       inspect --> summary.json / PLY
-
-  Bağımsız sentetik araştırma kolu:
-  Kamera kalibrasyonu + iki piksel eşleşmesi --> ışınlar --> triangulation
-                                                             |
-                                                     sentetik PLY/MAE/RMSE
-
-SON AŞAMADA (macOS + Xcode + fiziksel iPhone 11):
-
-  iOS SwiftUI/ARKit prototipi --> RGB + intrinsics + VIO pose + sparse points
-                                                      |
-                           doğrulama ve Sim(3) hizalama (henüz entegre değil)
+iPhone 11 RGB JPEG + (varsa) ARKit session.json
+                 |
+Windows MonoScan11 offline Python
+                 |
+  K/doğrulama -> SIFT eşleşmeleri -> RANSAC essential matrix
+                 |
+  İlk kamera çifti + triangulation -> artımlı PnP ve triangulation
+                 |
+   sparse.ply + cameras.json + tracks.json + summary.json
 ```
 
-**Koordinat notu:** Python geometri demosu `camera +Z forward` iğne-deliği (pinhole) koordinatları kullanır. ARKit ise kendi kamera konvansiyonunu kullanır; dönüşümler P2 aşamasına bırakılmıştır. **ARKit pozları P0 COLMAP eşleştirmesine beslenmez**; kaydedilip doğrulanabilir ama henüz füzyon yoktur.
+Bu dalda `PHOTO_ONLY` modu tamamlanmamış, **deneysel** bir SfM çekirdeğidir.
+`session.json` içindeki K kullanılabilir, ancak ARKit pozları henüz N4
+aşamasındaki poz-füzyonu için kullanılmamaktadır. Metrik ölçek bilinmez.
+N5 Bundle Adjustment ve N6 yoğun MVS/mesh bu dalda yoktur.
 
 ## 5. Proje klasörleri
 
@@ -140,7 +134,7 @@ SON AŞAMADA (macOS + Xcode + fiziksel iPhone 11):
 .github/ISSUE_TEMPLATE/             iOS ve gerçek sahne kabul iş listeleri
 tools/monoscan.py                   validate / reconstruct / inspect / demo
 tools/geometry.py                   Pinhole model + triangulation + sentetik demo
-tools/colmap_models.py              COLMAP binary sparse rapor/PLY
+monoscan_core/                      Kamera, SIFT, epipolar doğrulama, SfM, yerel PLY\ntools/colmap_models.py              Yalnızca tarihsel eski çıktı okuyucusu, native motor kullanmaz
 tests/                             Gerçek küçük PNG + sentetik COLMAP model fixture'ları
 ios/MonoScan11/                     Henüz Xcode'da derlenmemiş SwiftUI/ARKit kaynakları
 project.yml                         XcodeGen proje tarifi (Mac aşaması)
@@ -157,7 +151,7 @@ Bu depo **kaynak kodu / alpha araştırma sürümü** olarak yayımlanabilir. Ö
 
 ## 7. Veri gizliliği, ticari kullanım ve atıf
 
-- Kod MIT lisanslıdır. COLMAP ayrı indirilen bir araçtır; kendi [lisansını](https://github.com/colmap/colmap/blob/main/LICENSE.txt) ayrıca inceleyin.
+- MonoScan11 kaynak kodu MIT lisanslıdır. COLMAP yeni çalışma yolunda kullanılmaz; OpenCV/NumPy ve diğer bağımlılıkların lisans ve dağıtım şartları sürümlemede ayrıca doğrulanmalıdır.
 - Bulut, üyelik veya ücretli API zorunlu değildir. Açık kaynak/ücretsiz araçlar kurulunca çoğu işlem internetsiz yürütülebilir.
 - Ev, oda, özel mekân fotoğraflarını veya `session.json` dosyalarını GitHub'a yüklemeyin. `scans/`, `datasets/` ve `reconstruction/` Git tarafından yok sayılır; bunun dışında farklı klasöre konan özel görüntüleri de kendiniz denetleyin.
 - Bu ürün ölçüm sertifikalı bir profesyonel 3D lazer tarayıcı alternatifi değildir.
