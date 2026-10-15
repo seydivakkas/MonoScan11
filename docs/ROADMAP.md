@@ -11,7 +11,7 @@
 | N1 | Kamera modeli, intrinsics, rotasyonlar, ARKit/CV koordinat dönüşümleri | Hayır | Sayısal ve sentetik koordinat birim testleri |
 | N2 | SIFT/özellik eşleştirme, reciprocal match, geometrik aykırı değer elemesi | Hayır | Sentetik doku/özellik eşleştirme testleri |
 | N3 | Yerel seyrek SfM: başlangıç çifti, kamera kaydı, PnP, triangulation, tracks | Hayır | Sentetik çoklu-görüş ve başarısızlık testleri; gerçek başarı iddiası yok |
-| **N4** | ARKit VIO pozlarının güvenli kullanımı, koordinat hizalama ve poz öncülleri (priors) | **Hayır** | Sentetik `session.json`, yapay kamera pozları ve Sim(3) testleri; fotoğraf bazlı/ARKit'li modlar net ayrılmalı |
+| **N4** | ARKit VIO kamera öncülleri, CV koordinat dönüşümü, ARKit-guided seyrek SfM ve robust Sim(3) | **Hayır** | **Kodlandı; sentetik CI PASS.** VIO gerçek ölçüm/kovaryans iddiası yok; cihaz kabulü N9 |
 | **N5** | Sparse Bundle Adjustment, aykırı nokta temizliği, reprojeksiyon/poz hata göstergeleri | **Hayır** | Bilinen sentetik 3B sahnede yakınsama, degenerate vaka ve regresyon testleri |
 | **N6** | Yoğun derinlik (MVS), derinlik füzyonu, yüzey/mesh ve geometri dışa aktarımı | **Hayır** | Sentetik ve lisanslı, programatik üretilen sahnelerde PLY/OBJ/mesh yapısal testleri |
 | **N7** | Windows komutları, hata akışı, 3B önizleme/raporlama, iOS ekran/ZIP ve veri sözleşmesi bütünleşmesi | **Hayır** | UI sözleşmeleri, sahte veri göstermeme, offline/hata kurtarma kontrolü |
@@ -19,7 +19,8 @@
 | **N9 — SON** | Gerçek iPhone 11/Xcode derlemesi ve cihaz kabulü, gerçek RGB+ARKit çekimi, **ilk gerçek fotoğraf analizi**, bağımsız referansla ölçüm doğrulaması, saha performansı ve kullanıcı kabulü | **Evet, yalnızca burada** | Veri/izlenebilirlik, görsel geometri, cihaz ve metrik hatalar kayıtlı; başarısızlık açıkça raporlanmalı |
 
 **N0–N3:** Kodlanmış deneysel temel var; sentetik CI bulguları gerçek dünya doğruluğunu kanıtlamaz.
-**N4–N8:** Henüz tamamlanmış kabul edilmez; geliştirme yapılacak.
+**N4:** ARKit VIO pozlarını doğrudan kullanan native guided sparse mod, robust Sim(3) hizalama ve bilinmeyen kovaryans beyanı kodlandı. Sentetik regresyon mevcut; gerçek cihaz/gerçek ölçüm kabulü N9'da. Ayrıntı: [N4_ARKIT_VIO_FUSION.md](N4_ARKIT_VIO_FUSION.md).
+**N5–N8:** Henüz tamamlanmış kabul edilmez; geliştirme yapılacak.
 **N9:** Bilinçli olarak ertelendi. Hiçbir erken aşamada kullanıcıdan fotoğraf isteme, gerçek sahne deneyi veya gerçek fotoğraf üzerinden model performansı iddiası oluşturma.
 
 ## Ara aşama doğrulama standardı
