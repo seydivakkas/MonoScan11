@@ -116,6 +116,17 @@ class SessionTests(unittest.TestCase):
         with self.assertRaisesRegex(SessionError, "HEIC"):
             validate(self.root)
 
+    def test_windows_cp1252_console_can_print_json(self):
+        import contextlib
+        import io
+        output = io.BytesIO()
+        # Simulates default Windows console/redirect codepage without Turkish glyphs.
+        console = io.TextIOWrapper(output, encoding="cp1252", write_through=True)
+        with contextlib.redirect_stdout(console):
+            self.assertEqual(main(["validate", str(self.root)]), 0)
+        payload = json.loads(output.getvalue().decode("cp1252"))
+        self.assertEqual(payload["images"], 3)
+
     def test_png_header(self):
         self.assertEqual(image_dimensions(self.root / "images" / "frame_0000.png"), (16, 12))
 
