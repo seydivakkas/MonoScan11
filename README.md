@@ -1,6 +1,6 @@
 # MonoScan11
 
-> **Native SfM geliştirme dalı (N0–N4):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
+> **Native SfM geliştirme dalı (N0–N5):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
 
 **LiDAR'sız iPhone 11 için kamera tabanlı 3D rekonstrüksiyon araştırma projesi**
 
@@ -15,7 +15,7 @@ MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açı
 | Windows / Linux Python araçları | Kaynak kodu hazır; test edildi | `python -m unittest discover -s tests -v` |
 | Sentetik iki bakışlı derinlik hesabı | Tamamlandı, deterministik demo | `python tools/monoscan.py demo demo-output` |
 | Fotoğraf / ARKit `session.json` denetimi | Otomatik test edildi | JPEG/PNG başlık, boyut, matris, poz, güvenli dosya adları |
-| MonoScan11 native SfM + ARKit VIO | N0–N4 sentetik prototip; gerçek veri bekliyor | PHOTO_ONLY, ARKit-guided ve Sim(3) geometrisi; sensör kovaryansı bilinmiyor |
+| MonoScan11 native SfM + ARKit VIO + seyrek BA | N0–N5 sentetik prototip; gerçek veri bekliyor | PHOTO_ONLY, ARKit-guided, Sim(3) ve SciPy sparse BA; ölçülen sensör kovaryansı yok |
 | Gerçek iPhone 11 fotoğraflarından 3D rekonstrüksiyon | **Bekliyor** | Yeni native pipeline henüz gerçek iPhone/Windows ortamında kabul edilmedi |
 | SwiftUI arayüz / iOS ARKit uygulaması | 18 ekran kodlandı; **Xcode derlenmedi** | Kaynak parse + Swift Foundation testleri; macOS/Xcode ve iPhone kabulü en sonda |
 | iOS ZIP paketinin Windows uyumu | Sentetik görüntülerle PASS | Swift ZIP32 CRC -> Python `validate` zinciri; gerçek iPhone verisi değil |
@@ -103,8 +103,8 @@ Her başarılı native koşu yeni `reconstruction/runs/run-*/` dizini
 oluşturur: `sparse.ply`, `cameras.json`, `tracks.json`, `summary.json`.
 ARKit VIO'nun cihaz başına sayısal poz kovaryansı mevcut v1 biçiminde
 bulunmadığı için belirsizlik değerleri **null** raporlanır. Yalnız reprojeksiyon
-ve poz uyum kalıntıları gözlemlenebilir. Dense MVS, Bundle Adjustment ve
-gerçek cihaz kabulü henüz tamamlanmamıştır.
+ve poz uyum kalıntıları gözlemlenebilir. N5 seyrek BA isteğe bağlı uygulanır;
+N6 yoğun MVS ve gerçek cihaz kabulü henüz tamamlanmamıştır.
 
 [Ayrıntılı N4 ARKit VIO mimarisi ve sentetik kabul sınırları](docs/N4_ARKIT_VIO_FUSION.md).
 
@@ -124,7 +124,8 @@ Windows MonoScan11 offline Python
 
 Bu dalda `photo-only` ve `arkit-guided` ayrı deneysel modlardır. ARKit VIO pozları
 `arkit-guided` modunda kullanılır; ancak metrik doğruluk N9'a kadar bilinmez.
-N5 Bundle Adjustment ve N6 yoğun MVS/mesh bu dalda yoktur.
+N5 sparse Bundle Adjustment ayrı, deneysel refine adımı olarak eklendi;
+N6 yoğun MVS/mesh bu dalda henüz bulunmuyor.
 
 ## 5. Proje klasörleri
 
@@ -156,3 +157,21 @@ Bu depo **kaynak kodu / alpha araştırma sürümü** olarak yayımlanabilir. Ö
 - Bu ürün ölçüm sertifikalı bir profesyonel 3D lazer tarayıcı alternatifi değildir.
 
 **Teknik dayanaklar:** [Apple ARKit ARWorldTrackingConfiguration](https://developer.apple.com/documentation/arkit/arworldtrackingconfiguration), [ARFrame.rawFeaturePoints](https://developer.apple.com/documentation/arkit/arframe/rawfeaturepoints), [COLMAP CLI](https://colmap.github.io/cli.html).
+
+## N5 — Sentetik Sparse Bundle Adjustment
+
+```powershell
+python -m pip install -r requirements-native.txt
+# Yalnız sentetik N3/N4 koşuları için
+python tools/monoscan.py refine "C:\\test\\synthetic-session\\reconstruction\\runs\\run-xyz" --max-nfev 90
+python tools/monoscan.py reconstruct "C:\\test\\synthetic-session" --mode arkit-guided --bundle-adjust
+```
+
+SciPy TRF ve seyrek Jacobian ile kamera pozları ve 3B noktalar ortak optimize edilir;
+fotoğraf modunda gauge korunur, ARKit modunda ayarlanabilir *heuristik* prior
+kullanılır. Sensörün gerçek pose kovaryansı bilinmez. Yakınsama tamamlanmadıysa
+sadece koşullu `PARTIAL` sonucu mümkündür; gerçek dünya doğruluğu iddia edilmez.
+İzler, kaynak kameralar ve giriş SHA değerleri korunarak yeni
+`refinements/n5-*` klasörüne yazılır. Önceki taramalar değiştirilmez.
+
+[N5 BA teknik sözleşmesi](docs/N5_SPARSE_BUNDLE_ADJUSTMENT.md) · [N0–N9 güncel plan](docs/ROADMAP.md)
