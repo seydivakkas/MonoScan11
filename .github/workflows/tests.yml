@@ -52,5 +52,12 @@ jobs:
               with tempfile.TemporaryDirectory() as folder:
                   src.extractall(folder)
                   subprocess.run([sys.executable,'tools/monoscan.py','validate',folder],check=True)
-          print('PASS: ZIP integrity + Python session.json contract')
+                  from monoscan_core.workspace import ProjectCatalog, validate_archive
+                  members, manifest = validate_archive(archive)
+                  assert len(manifest['frames']) == 3
+                  project = ProjectCatalog(pathlib.Path(folder)/'n7-catalog')
+                  imported = project.import_zip(archive, name='Swift ZIP synthetic fixture')
+                  assert project.session_path(imported['id']).joinpath('session.json').is_file()
+                  assert sum(n.startswith('images/') for n in members) == 3
+          print('PASS: Swift ZIPStore -> strict N7 import -> native Python validator')
           PY
