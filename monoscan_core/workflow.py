@@ -119,17 +119,26 @@ def run_command(arguments, *, cancel=None, timeout=1800):
         stderr=subprocess.PIPE, creationflags=flags)
     started = time.monotonic()
     try:
-        while proc.poll() is None:
+        while True:
             if cancel is not None and cancel.is_set():
                 proc.terminate()
-                proc.communicate(timeout=10)
+                try:
+                    proc.communicate(timeout=3)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.communicate()
                 raise PipelineCancelled("İşlem kullanıcı tarafından iptal edildi")
             if time.monotonic() - started > timeout:
                 proc.kill()
-                proc.communicate(timeout=10)
+                proc.communicate()
                 raise PipelineError("Native processing exceeded time limit")
-            time.sleep(0.075)
-        stdout, stderr = proc.communicate()
+            try:
+                # communicate() drains stdout/stderr concurrently, avoiding
+                # child deadlock when diagnostic output fills OS pipe buffers.
+                stdout, stderr = proc.communicate(timeout=0.15)
+                break
+            except subprocess.TimeoutExpired:
+                continue
     finally:
         if proc.poll() is None:
             proc.kill()
