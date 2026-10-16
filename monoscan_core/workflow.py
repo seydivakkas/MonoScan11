@@ -6,6 +6,7 @@ per-feature progress. No fake percentage, fake geometry or "success" on failure.
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -165,6 +166,15 @@ def run_pipeline(session, *, mode="photo-only", focal_px=None,
         raise PipelineError("ARKit-guided cannot accept manual focal length")
     if focal_px is not None and (not 1 <= float(focal_px) <= 1e7):
         raise PipelineError("Invalid pixel focal length")
+    if do_refine and (not math.isfinite(prior_weight) or not 0 < prior_weight <= 100):
+        raise PipelineError("Invalid heuristic ARKit prior weight")
+    if do_dense and (
+            not math.isfinite(depth_min) or not math.isfinite(depth_max)
+            or not 0 < depth_min < depth_max
+            or not isinstance(planes, int) or not 8 <= planes <= 128
+            or not isinstance(max_side, int) or not 48 <= max_side <= 384
+            or not math.isfinite(voxel_size) or not 0 < voxel_size):
+        raise PipelineError("Invalid CPU MVS depth/range/voxel limits")
     session = Path(session).resolve()
     runner = execute if execute is not None else run_command
     stages = ["validate", "reconstruct"] + (["refine"] if do_refine else []) + (
