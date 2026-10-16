@@ -176,6 +176,7 @@ def run_pipeline(session, *, mode="photo-only", focal_px=None,
     current = None
     previous_run = None
     completed = []
+    partial = []
     try:
         for stage in stages:
             if cancel is not None and cancel.is_set():
@@ -203,13 +204,17 @@ def run_pipeline(session, *, mode="photo-only", focal_px=None,
                     raise PipelineError("Native stage has no physically saved run directory")
                 previous_run = Path(run).resolve()
             completed.append(stage)
+            state = result.get("state", "validated")
+            if state == "PARTIAL" or result.get("bundle_adjustment") == "partial_nonconverged":
+                partial.append(stage)
             post("complete", stage, completed=len(completed), total=len(stages),
-                 run=str(previous_run) if previous_run else None,
-                 status=result.get("state", "validated"))
+                 run=str(previous_run) if previous_run else None, status=state)
+        overall = "PARTIAL" if partial else "COMPLETED_STAGES"
         post("finished", current, completed=len(completed), total=len(stages),
+             status=overall, partial_stages=list(partial),
              run=str(previous_run) if previous_run else None)
         return {"completed": completed, "run": str(previous_run) if previous_run else None,
-                "result": result}
+                "state": overall, "partial_stages": partial, "result": result}
     except (PipelineError, OSError, ValueError) as exc:
         post("cancelled" if isinstance(exc, PipelineCancelled) else "failed",
              current or "not_started", completed=len(completed), total=len(stages),
@@ -239,7 +244,8 @@ def launch_single_stage(stage, run, session, *, execute=None, emit=None, **setti
         if not Path(result["run"]).is_dir():
             raise PipelineError("Native result is not present on disk")
         if emit:
-            emit({"event": "complete", "stage": stage, "run": result["run"]})
+            emit({"event": "complete", "stage": stage, "run": result["run"],
+                  "status": result.get("state", "unknown")})
         return result
     except (PipelineError, OSError, ValueError) as exc:
         if emit:
