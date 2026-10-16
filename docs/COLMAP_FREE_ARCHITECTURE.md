@@ -1,4 +1,4 @@
-# MonoScan11 — native SfM migration (N0–N5)
+# MonoScan11 — native SfM migration (N0–N6)
 
 **Branch:** `feature/native-sfm-n0-n3` | **Status:** experimental / no real-device validation
 
@@ -17,7 +17,7 @@ Native pipeline:
 4. PHOTO_ONLY essential-matrix pair initialization / incremental PnP
 5. N4: strict ARKit VIO pose prior loader, opt-in ARKit-guided triangulation and robust Sim(3) diagnostics
 6. N5: robust sparse BA with simultaneous camera and point optimization, fixed photo gauge and explicitly heuristic ARKit priors
-7. N6 (pending): physically grounded dense MVS and optional meshing
+7. N6: CPU plane-sweep depth, photometric and reciprocal depth gates, multi-view voxel fusion and open-grid OBJ; synthetic-only acceptance
 
 Constraints:
 - PHOTO_ONLY has **arbitrary scale** without an external scale anchor.
@@ -69,3 +69,7 @@ See [N4 ARKit VIO fusion](N4_ARKIT_VIO_FUSION.md). The existing iPhone v1 sessio
 ## N5 source and contract
 
 [Native Sparse Bundle Adjustment](N5_SPARSE_BUNDLE_ADJUSTMENT.md) implements local SciPy-based reprojection optimization in independent refinement run directories; it does not call a COLMAP executable or assert real-data acceptance. Optimization uncertainties are unknown unless measured and validated by a future reviewed acquisition schema.
+
+## N6 source and boundary
+
+[Native Dense MVS technical contract](N6_DENSE_MVS.md) implements the limited, low-resolution CPU reconstruction, not a tested dense reconstruction of a real iPhone scene. N9 remains the first physical-device and real-photo acceptance phase. The mesh is explicitly an open grid surface, not a watertight object.
