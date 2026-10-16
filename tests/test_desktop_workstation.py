@@ -1,6 +1,7 @@
 """N7 headless synthetic-only Windows UI contract, ZIP security and workflow tests."""
 import hashlib
 import json
+import sys
 from pathlib import Path
 import struct
 import tempfile
@@ -119,6 +120,25 @@ def create_run(session, kind="sparse"):
         "v 0 1 2\nv 1 1 2\nf 1 2 3\nf 2 4 3\n", encoding="ascii")
     (dense / "depth_maps.npz").write_bytes(b"synthetic test placeholder")
     return dense
+
+
+class WindowsDesktopSmokeTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "win32", "Actual Tk window smoke test requires Windows")
+    def test_real_tk_workstation_creates_and_renders_empty_state(self):
+        from monoscan_core.desktop import MonoScanDesktop
+        with tempfile.TemporaryDirectory() as td:
+            window = MonoScanDesktop(root=Path(td) / "catalog")
+            try:
+                window.withdraw()
+                window.update_idletasks()
+                window.update()
+                self.assertIn("MonoScan11", window.title())
+                self.assertEqual(window.projects_list.size(), 0)
+                self.assertEqual(window.stage_list.size(), 4)
+                self.assertIsNone(window.preview_model)
+                self.assertIn("Henüz", window.inspector.get("1.0", "end"))
+            finally:
+                window.destroy()
 
 
 class WorkspaceContractTests(unittest.TestCase):
