@@ -16,7 +16,7 @@
 | **N6** | CPU plane-sweep MVS, çoklu derinlik tutarlılığı, voxel füzyonu, açık OBJ mesh ve PLY | **Hayır** | **Deneysel kodlandı.** Prosedürel sentetik 4-kamera görüntüleriyle geometrik test; 3–8 kamera, düşük çözünürlüklü CPU sınırı |
 | **N7** | Windows Tkinter proje yönetimi, güvenli iPhone ZIP import, aşama bazlı işlem hattı, gerçek PLY/OBJ önizleme, kanıt ve belirsizlik panelleri | **Hayır** | **İlk arayüz kodlandı; Windows Tk açılış smoke testi ve Swift ZIP→N7 import sözleşmesi CI PASS.** Son ergonomik ve gerçek cihaz kabulü bekliyor |
 | **N8** | Prosedürel ZIP→N4→N5→N6→N7 gerçek algoritma akışı; tekrar edilebilirlik, süre/bellek raporu, klavye/kontrast, güvenli kurtarma ve kaynak ZIP | **Hayır** | **Kodlandı; sentetik CI doğrulaması.** Kaynak ZIP bağımsız kurulum değildir; fiziksel Windows/iPhone kabulü N9 |
-| **N9 — SON** | Gerçek iPhone 11/Xcode derlemesi ve cihaz kabulü, gerçek RGB+ARKit çekimi, **ilk gerçek fotoğraf analizi**, bağımsız referansla ölçüm doğrulaması, saha performansı ve kullanıcı kabulü | **Evet, yalnızca burada** | Veri/izlenebilirlik, görsel geometri, cihaz ve metrik hatalar kayıtlı; başarısızlık açıkça raporlanmalı |
+| **N9 — SON** | Yetkili kamusal gerçek veri proxy adaptörü, gerçek iPhone 11/Xcode, fiziksel Windows, kalibrasyon ve bağımsız referans ölçüm kabulü | **Evet, yalnızca burada** | **Kısmen başlandı:** ARKitScenes iPad Pro gerçek veri adaptörü/opsiyonel download + başarısızlık raporu ve sabit-ölçek holdout QA kodlandı; fiziksel iPhone11/Windows ve gerçek referans D1–D8 **AÇIK** |
 
 **N0–N3:** Kodlanmış deneysel temel var; sentetik CI bulguları gerçek dünya doğruluğunu kanıtlamaz.
 **N4:** ARKit VIO pozlarını doğrudan kullanan native guided sparse mod, robust Sim(3) hizalama ve bilinmeyen kovaryans beyanı kodlandı. Sentetik regresyon mevcut; gerçek cihaz/gerçek ölçüm kabulü N9'da. Ayrıntı: [N4_ARKIT_VIO_FUSION.md](N4_ARKIT_VIO_FUSION.md).
@@ -24,7 +24,7 @@
 **N6:** CPU plane-sweep, farklı kameralarda derinlik tutarlılığı, voxel füzyonu ve açık mesh kodlandı. Sentetik testler ve CI doğrulanıyor. [N6 Dense MVS sözleşmesi](N6_DENSE_MVS.md).
 **N7:** Çevrimdışı Windows Tkinter iş istasyonu ilk sürümü ve iPhone ZIP sözleşmesi kodlandı; yalnız sentetik headless testler ve Windows Tk açılış smoke testi tamam. [N7 arayüz entegrasyonu](N7_WINDOWS_WORKSTATION.md). Gerçek fotoğraf ve fiziksel cihaz kabulü yalnız N9.
 **N8:** Sentetik tam zincir testi, kaynak paketi doğrulaması, crash recovery incelemesi, Win32 bellek raporu ve erişilebilirlik aday denetimleri eklendi. [N8 kabul sözleşmesi](N8_SYNTHETIC_ACCEPTANCE.md). N9 gerçek fotoğraf ve bağımsız metrik kabulünden önce stable sürüm yok.
-**N9:** Bilinçli olarak ertelendi. Hiçbir erken aşamada kullanıcıdan fotoğraf isteme, gerçek sahne deneyi veya gerçek fotoğraf üzerinden model performansı iddiası oluşturma.
+**N9:** Resmî kamusal veri kaynakları araştırıldı; ARKitScenes iPad Pro `.traj`/`.pincam`/PNG adaptörü, kaynak lisans kapısı ve fiziksel ölçüm holdout motoru geliştirildi. Gerçek ARKitScenes dosyaları bu depoya indirilmedi; gerçek iPhone 11/Xcode, bağımsız ölçüm ve fiziksel Windows kabulü yapılmadı. **N9 tamamlandı denemez.** [N9 kaynak/cihaz kapıları](N9_DATASET_AND_DEVICE_ACCEPTANCE.md).
 
 ## Ara aşama doğrulama standardı
 
