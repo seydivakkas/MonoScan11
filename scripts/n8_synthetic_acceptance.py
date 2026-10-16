@@ -134,6 +134,10 @@ def _rss_snapshot():
         psapi = ctypes.WinDLL("psapi")
         kernel = ctypes.WinDLL("kernel32")
         kernel.GetCurrentProcess.restype = wintypes.HANDLE
+        psapi.GetProcessMemoryInfo.argtypes = (
+            wintypes.HANDLE, ctypes.POINTER(Pmc), wintypes.DWORD
+        )
+        psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
         if psapi.GetProcessMemoryInfo(kernel.GetCurrentProcess(),
                                       ctypes.byref(pmc), pmc.cb):
             return {"parent_peak_working_set_bytes": int(pmc.PeakWorkingSetSize),
