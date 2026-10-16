@@ -65,7 +65,12 @@ def _read_views(run, session, max_side):
             pose = camera_to_world(record["camera_to_world_cv"])
             decoded, original_size = read_image(path, max_side=max_side)
             w, h = original_size
-            kh = adjusted_intrinsics(k, (w, h),
+            # N3/N4 stored K for their max_side=1600 feature buffers,
+            # not necessarily full original-camera pixels. Resize from that
+            # exact *intermediate* size into the N6 processed image.
+            n3_scale = min(1.0, 1600.0 / max(w, h))
+            n3_size = (round(w * n3_scale), round(h * n3_scale))
+            kh = adjusted_intrinsics(k, n3_size,
                                      (decoded.shape[1], decoded.shape[0]))
             views.append({
                 "name": name, "image": decoded, "gray": cv2.cvtColor(
