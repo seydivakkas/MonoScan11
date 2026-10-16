@@ -340,6 +340,11 @@ class PipelineStageTests(unittest.TestCase):
             run_pipeline("/not/existing", mode="arkit-guided", focal_px=500)
         with self.assertRaisesRegex(PipelineError, "requires N5"):
             run_pipeline("/not/existing", do_dense=True, do_refine=False)
+        with self.assertRaisesRegex(PipelineError, "prior weight"):
+            run_pipeline("/not/existing", do_refine=True, prior_weight=float("nan"))
+        with self.assertRaisesRegex(PipelineError, "CPU MVS"):
+            run_pipeline("/not/existing", do_refine=True, do_dense=True,
+                         depth_min=5.0, depth_max=1.0)
 
 
 if __name__ == "__main__":
