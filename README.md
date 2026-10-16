@@ -1,6 +1,6 @@
 # MonoScan11
 
-> **Native SfM geliştirme dalı (N0–N6):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
+> **Native SfM geliştirme dalı (N0–N7):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
 
 **LiDAR'sız iPhone 11 için kamera tabanlı 3D rekonstrüksiyon araştırma projesi**
 
@@ -16,6 +16,7 @@ MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açı
 | Sentetik iki bakışlı derinlik hesabı | Tamamlandı, deterministik demo | `python tools/monoscan.py demo demo-output` |
 | Fotoğraf / ARKit `session.json` denetimi | Otomatik test edildi | JPEG/PNG başlık, boyut, matris, poz, güvenli dosya adları |
 | MonoScan11 native SfM + ARKit VIO + BA + MVS | N0–N6 sentetik prototip | Native PHOTO_ONLY/ARKit sparse, sparse BA, düşük çözünürlüklü CPU plane-sweep, füzyon ve açık OBJ; gerçek veri kabulü yok |
+| Windows N7 çalışma istasyonu | İlk sürüm kodlandı, sentetik CI PASS | Tkinter proje kataloğu, iPhone ZIP içe aktarımı, N3–N6 süreç yönetimi, PLY/OBJ görüntüleyici, kanıt panelleri; gerçek kullanıcı kabulü yok |
 | Gerçek iPhone 11 fotoğraflarından 3D rekonstrüksiyon | **Bekliyor** | Yeni native pipeline henüz gerçek iPhone/Windows ortamında kabul edilmedi |
 | SwiftUI arayüz / iOS ARKit uygulaması | 18 ekran kodlandı; **Xcode derlenmedi** | Kaynak parse + Swift Foundation testleri; macOS/Xcode ve iPhone kabulü en sonda |
 | iOS ZIP paketinin Windows uyumu | Sentetik görüntülerle PASS | Swift ZIP32 CRC -> Python `validate` zinciri; gerçek iPhone verisi değil |
@@ -49,6 +50,30 @@ MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açı
 ## GitHub'a ilk yükleme (Windows)
 
 [GitHub deposu](https://github.com/seydivakkas/MonoScan11) henüz boşsa proje ZIP'ini açıp **`Publish-GitHub.cmd`** dosyasını çalıştırabilirsin. Bu betik `origin` adresini doğrular, `main` hedefine yalnız normal `git push` yapar (**force-push yoktur**). Git for Windows ve GitHub kimlik doğrulaması gerekir. Betiğin gerçek Windows kabul testi henüz yapılmadı; alternatif komutlar `docs/GITHUB_YAYIN.md` içindedir. GitHub Actions sonuçları yükleme sonrası kontrol edilmelidir.
+
+## N7 — Windows çevrimdışı çalışma istasyonu
+
+Windows'ta deneysel arayüzü başlat:
+
+```powershell
+python -m pip install -r requirements-native.txt
+python scripts/monoscan_desktop.py
+```
+
+Alternatif: Depo kökündeki `MonoScan11-Desktop.cmd` dosyasını çalıştır.
+Python 3.11+, standart Tkinter ve native bağımlılıklar gerekir.
+**Henüz dağıtılabilir Windows EXE/kurulum paketi veya gerçek Windows kullanıcı
+kabulü bulunmuyor.** N7 arayüzünde işlem başlatmak için kullanıcı, seçilen
+oturumun **sentetik test verisi olduğunu** açıkça işaretlemelidir. Gerçek
+fotoğraf ve cihaz testleri N9'a ertelenmiştir.
+
+Arayüzde iPhone `ZIPStore.swift` uyumlu ZIP import, proje katalogu,
+`photo-only` ve `arkit-guided` modu, N5 BA, N6 CPU dense,
+aşama bazlı gerçek durumlar, iptal, kaynak raporu ve PLY/OBJ
+önizleme bulunur. Uygulama boş projelerde sahte model çizmez; gerçek
+sensör hata kovaryansı veya fiziksel ölçüm kesinliği göstermez.
+
+[Ayrıntılı N7 arayüz ve sözleşme belgesi](docs/N7_WINDOWS_WORKSTATION.md).
 
 ## 1. Windows'ta hemen çalıştır
 
