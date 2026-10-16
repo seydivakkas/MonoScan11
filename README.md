@@ -258,6 +258,8 @@ fiziksel kullanıcı kabulü **yalnız N9**.
 
 [Kaynak araştırması, veri hakları ve sekiz fiziksel kabul kapısı](docs/N9_DATASET_AND_DEVICE_ACCEPTANCE.md).
 
+Ek internet kaynağı: [Pix4D Olympic Flame](https://support.pix4d.com/hc/en-us/articles/360000235126) — gerçek **iPhone 13 ile çekilen 117 JPEG** (208 MB). Bu kaynağı `scripts/n9_iphone_photo_proxy.py` PHOTO_ONLY oturumuna dönüştürebilir; fakat özgün ARKit VIO pozu veya güvenilir kalibrasyon otomatik mevcut değildir. Fotoğrafları bu çalışmada indirme denemesi başarılı olmadı; kullanıcı haklarını inceleyip bağımsız kaynak arşivini sağlayabilir. Kaynakların eğitim kullanım şartlarına uyulmalıdır.
+
 N9 gerçek fotoğraf evresine **hazırlık** kodlandı: Apple ARKitScenes
 (kaynağı **iPad Pro**, iPhone 11 değil) RGB/pose/intrinsics dönüştürücüsü,
 yetkili indirme, yalnız orijinal geometriyle public proxy denemesi,
