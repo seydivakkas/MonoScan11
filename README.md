@@ -1,6 +1,6 @@
 # MonoScan11
 
-> **Native SfM geliştirme dalı (N0–N7):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
+> **Native SfM geliştirme dalı (N0–N8):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
 
 **LiDAR'sız iPhone 11 için kamera tabanlı 3D rekonstrüksiyon araştırma projesi**
 
@@ -16,7 +16,7 @@ MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açı
 | Sentetik iki bakışlı derinlik hesabı | Tamamlandı, deterministik demo | `python tools/monoscan.py demo demo-output` |
 | Fotoğraf / ARKit `session.json` denetimi | Otomatik test edildi | JPEG/PNG başlık, boyut, matris, poz, güvenli dosya adları |
 | MonoScan11 native SfM + ARKit VIO + BA + MVS | N0–N6 sentetik prototip | Native PHOTO_ONLY/ARKit sparse, sparse BA, düşük çözünürlüklü CPU plane-sweep, füzyon ve açık OBJ; gerçek veri kabulü yok |
-| Windows N7 çalışma istasyonu | İlk sürüm kodlandı, sentetik CI PASS | Tkinter proje kataloğu, iPhone ZIP içe aktarımı, N3–N6 süreç yönetimi, PLY/OBJ görüntüleyici, kanıt panelleri; gerçek kullanıcı kabulü yok |
+| Windows N7/N8 çalışma istasyonu | Sentetik entegrasyon ve güvenlik testleri | Tkinter proje katalogu, ZIP içe aktarımı, N4–N6 gerçek prosedürel tam zincir, kaynak ZIP doğrulama, klavye erişimi; gerçek kullanıcı kabulü yok |
 | Gerçek iPhone 11 fotoğraflarından 3D rekonstrüksiyon | **Bekliyor** | Yeni native pipeline henüz gerçek iPhone/Windows ortamında kabul edilmedi |
 | SwiftUI arayüz / iOS ARKit uygulaması | 18 ekran kodlandı; **Xcode derlenmedi** | Kaynak parse + Swift Foundation testleri; macOS/Xcode ve iPhone kabulü en sonda |
 | iOS ZIP paketinin Windows uyumu | Sentetik görüntülerle PASS | Swift ZIP32 CRC -> Python `validate` zinciri; gerçek iPhone verisi değil |
@@ -219,3 +219,37 @@ keyfîdir; ARKit-guided yaklaşık metre birimi bağımsız doğrulama değildir
 
 [N6 teknik sözleşmesi](docs/N6_DENSE_MVS.md) ·
 [N0–N9 yol haritası](docs/ROADMAP.md)
+
+
+## N8 — Sentetik uçtan uca sistem kabulü
+
+Gerçek görüntü kullanılmadan sıfırdan prosedürel 4 kameralı PNG+ARKit ZIP
+oluşturulur; Swift uyumlu ZIP sözleşmesiyle içe alınır ve gerçek native
+N4 SfM → N5 seyrek BA (gereksizse açık `skipped_already_consistent`)
+→ N6 yoğun MVS/PLY/OBJ → N7 model keşfi yürütülür:
+
+```powershell
+python -m pip install -r requirements-native.txt
+python scripts/n8_synthetic_acceptance.py --repeat 2 --output n8-acceptance.json
+```
+
+Bu işlem yalnız **sentetik test verisi** üretir. Profil süreleri ve
+bellek değerleri CI ortamı içindir; gerçek iPhone veya son kullanıcı
+Windows performansı olarak yorumlanmaz. Aynı makinede kaynak artefaktların
+SHA-256 tekrar edilebilirliği kontrol edilir.
+
+Windows için deterministik **kaynak kod paketi**, bağımsız EXE değil:
+
+```powershell
+python scripts/package_n8_windows.py --output dist/MonoScan11-N8-source.zip
+python scripts/package_n8_windows.py --verify dist/MonoScan11-N8-source.zip
+```
+
+Yarım kalan içe aktarımlar otomatik silinmez, kayıt dışı oturum olarak
+gösterilir. N7 masaüstü F1 kısayol rehberi, yön tuşuyla 3B model döndürme,
+F5 sentetik işlem, Esc iptal ve Ctrl+O ZIP import içerir. Ekran okuyucu,
+yüksek DPI ve erişilebilirlik kullanıcı testleri **henüz son kabulden geçmedi**.
+Gerçek fotoğraflar, iPhone 11/Xcode, bağımsız metrik doğrulama ve
+fiziksel kullanıcı kabulü **yalnız N9**.
+
+[Ayrıntılı N8 sistem kabulü ve açık riskler](docs/N8_SYNTHETIC_ACCEPTANCE.md).
