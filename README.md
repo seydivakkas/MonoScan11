@@ -1,6 +1,6 @@
 # MonoScan11
 
-> **Native SfM geliştirme dalı (N0–N8):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
+> **Native SfM geliştirme dalı (N0–N9 dış veri hazırlığı):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
 
 **LiDAR'sız iPhone 11 için kamera tabanlı 3D rekonstrüksiyon araştırma projesi**
 
@@ -253,3 +253,20 @@ Gerçek fotoğraflar, iPhone 11/Xcode, bağımsız metrik doğrulama ve
 fiziksel kullanıcı kabulü **yalnız N9**.
 
 [Ayrıntılı N8 sistem kabulü ve açık riskler](docs/N8_SYNTHETIC_ACCEPTANCE.md).
+
+## N9 — Gerçek görüntü referansları ve iPhone 11 kabulü
+
+[Kaynak araştırması, veri hakları ve sekiz fiziksel kabul kapısı](docs/N9_DATASET_AND_DEVICE_ACCEPTANCE.md).
+
+N9 gerçek fotoğraf evresine **hazırlık** kodlandı: Apple ARKitScenes
+(kaynağı **iPad Pro**, iPhone 11 değil) RGB/pose/intrinsics dönüştürücüsü,
+yetkili indirme, yalnız orijinal geometriyle public proxy denemesi,
+bağımsız mesafe/nokta holdout analizi. Lisans onayı, fiziksel iPhone 11,
+Xcode, kendi RGB+ARKit çekimi, ölçülen referans ve gerçek Windows kurulum
+yapılmadı. Bu nedenle gerçek cihaz veya fiziksel doğruluk geçerliliği
+**kanıtlanmadı**. Kullanıcı gerçek dataset haklarını kendisi denetlemelidir.
+
+```powershell
+python scripts/n9_fetch_arkitscenes.py --video-id 41069046 --split Validation --output "C:\N9-Data\ARKitScenes\41069046" --show-urls
+# --license-reviewed bayrağı ancak veri kullanım koşullarını inceledikten sonra.
+```
