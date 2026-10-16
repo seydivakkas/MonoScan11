@@ -1,6 +1,6 @@
 # MonoScan11
 
-> **Native SfM geliştirme dalı (N0–N5):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
+> **Native SfM geliştirme dalı (N0–N6):** Bu dal COLMAP'sız, deneysel bir fotoğraf tabanlı 3B işlem hattına geçiş içindir. Henüz gerçek iPhone/Windows kabulü veya metrik doğruluk kanıtı yoktur. Önce [geçiş mimarisini](docs/COLMAP_FREE_ARCHITECTURE.md) okuyun.
 
 **LiDAR'sız iPhone 11 için kamera tabanlı 3D rekonstrüksiyon araştırma projesi**
 
@@ -15,7 +15,7 @@ MonoScan11, fiziksel LiDAR sensörünü taklit etmez. Birden fazla bakış açı
 | Windows / Linux Python araçları | Kaynak kodu hazır; test edildi | `python -m unittest discover -s tests -v` |
 | Sentetik iki bakışlı derinlik hesabı | Tamamlandı, deterministik demo | `python tools/monoscan.py demo demo-output` |
 | Fotoğraf / ARKit `session.json` denetimi | Otomatik test edildi | JPEG/PNG başlık, boyut, matris, poz, güvenli dosya adları |
-| MonoScan11 native SfM + ARKit VIO + seyrek BA | N0–N5 sentetik prototip; gerçek veri bekliyor | PHOTO_ONLY, ARKit-guided, Sim(3) ve SciPy sparse BA; ölçülen sensör kovaryansı yok |
+| MonoScan11 native SfM + ARKit VIO + BA + MVS | N0–N6 sentetik prototip | Native PHOTO_ONLY/ARKit sparse, sparse BA, düşük çözünürlüklü CPU plane-sweep, füzyon ve açık OBJ; gerçek veri kabulü yok |
 | Gerçek iPhone 11 fotoğraflarından 3D rekonstrüksiyon | **Bekliyor** | Yeni native pipeline henüz gerçek iPhone/Windows ortamında kabul edilmedi |
 | SwiftUI arayüz / iOS ARKit uygulaması | 18 ekran kodlandı; **Xcode derlenmedi** | Kaynak parse + Swift Foundation testleri; macOS/Xcode ve iPhone kabulü en sonda |
 | iOS ZIP paketinin Windows uyumu | Sentetik görüntülerle PASS | Swift ZIP32 CRC -> Python `validate` zinciri; gerçek iPhone verisi değil |
@@ -125,7 +125,7 @@ Windows MonoScan11 offline Python
 Bu dalda `photo-only` ve `arkit-guided` ayrı deneysel modlardır. ARKit VIO pozları
 `arkit-guided` modunda kullanılır; ancak metrik doğruluk N9'a kadar bilinmez.
 N5 sparse Bundle Adjustment ayrı, deneysel refine adımı olarak eklendi;
-N6 yoğun MVS/mesh bu dalda henüz bulunmuyor.
+N6 deneysel, düşük çözünürlüklü CPU MVS/füzyon/açık mesh çekirdeği eklendi; gerçek fotoğraf kabulü N9'da.
 
 ## 5. Proje klasörleri
 
@@ -175,3 +175,22 @@ sadece koşullu `PARTIAL` sonucu mümkündür; gerçek dünya doğruluğu iddia 
 `refinements/n5-*` klasörüne yazılır. Önceki taramalar değiştirilmez.
 
 [N5 BA teknik sözleşmesi](docs/N5_SPARSE_BUNDLE_ADJUSTMENT.md) · [N0–N9 güncel plan](docs/ROADMAP.md)
+
+
+## N6 — CPU MVS, yoğun nokta ve açık mesh (yalnız sentetik)
+
+```powershell
+python -m pip install -r requirements-native.txt
+python -m unittest discover -s tests -v
+python tools/monoscan.py dense "C:\test\synthetic-session\reconstruction\runs\run-xyz" "C:\test\synthetic-session" --min-depth 1.7 --max-depth 3.0 --planes 43 --max-side 112 --voxel-size 0.10
+```
+
+Girişteki N3/N4/N5 kamera matrisleri ve SHA-256 ile eşleşen orijinal
+sentetik görüntüler kullanılır. Çıktı, kaynağı bozmayan ayrı
+`dense/n6-*` klasöründe `depth_maps.npz`, `dense.ply`, `mesh.obj`
+ve `summary.json` dosyalarıdır. OBJ **açık yüzeydir**, kapalı/su
+geçirmez 3B nesne ya da LiDAR eşdeğeri değildir. PHOTO_ONLY ölçeği
+keyfîdir; ARKit-guided yaklaşık metre birimi bağımsız doğrulama değildir.
+
+[N6 teknik sözleşmesi](docs/N6_DENSE_MVS.md) ·
+[N0–N9 yol haritası](docs/ROADMAP.md)
