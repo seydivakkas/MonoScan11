@@ -497,10 +497,15 @@ class MonoScanDesktop(tk.Tk):
                 if action == "start":
                     self._mark_stage(stage, "ÇALIŞIYOR")
                 elif action == "complete":
-                    self._mark_stage(stage, "BİTTİ")
+                    self._mark_stage(stage, "KISMİ" if payload.get("status") == "PARTIAL"
+                                     else "BİTTİ")
                 elif action in ("failed", "cancelled"):
                     self._mark_stage(stage, "HATA")
                 label = f"{stage}: {action}"
+                if payload.get("status") == "PARTIAL":
+                    label += " | KISMİ GEOMETRİ / eksik kayıt veya BA yakınsaması"
+                elif action == "finished" and payload.get("partial_stages"):
+                    label += " | KISMİ: " + ", ".join(payload["partial_stages"])
                 if payload.get("message"):
                     label += " | " + payload["message"]
                 self.stage_state.set(label)
@@ -513,7 +518,9 @@ class MonoScanDesktop(tk.Tk):
                     self._write_log("Oturum kataloğa eklendi: " + result["name"])
                 else:
                     path = result.get("run") if isinstance(result, dict) else None
-                    self._write_log("İşlem tamamlandı. Çıktı: " + str(path))
+                    status = result.get("state", result.get("result", {}).get("state", "unknown"))
+                    self._write_log("Aşamalar sona erdi [" + str(status) +
+                                    "]. Çıktı: " + str(path))
                     self._refresh_runs()
             elif event_type == "task_error":
                 self._finish_task()
