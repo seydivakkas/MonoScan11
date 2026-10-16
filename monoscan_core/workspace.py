@@ -162,6 +162,27 @@ class ProjectCatalog:
             if temp.exists():
                 temp.unlink()
 
+    def recovery_findings(self):
+        """Inspect interrupted operations without deleting or moving user bytes.
+
+        A crash may leave a temp ZIP extraction or a published but unindexed
+        session. N8 warns and preserves those bytes for manual review.
+        """
+        findings = []
+        sessions = self.root / "sessions"
+        known = {Path(p["session"]).resolve() for p in self._projects if p["origin"] == "zip"}
+        if sessions.is_dir():
+            for child in sorted(sessions.iterdir()):
+                if child.is_symlink():
+                    findings.append({"kind": "unsafe_symlink", "path": str(child)})
+                elif child.is_dir() and child.name.startswith(".import-"):
+                    findings.append({"kind": "interrupted_import", "path": str(child)})
+                elif child.is_dir() and child.resolve() not in known:
+                    findings.append({"kind": "unindexed_session", "path": str(child)})
+        for child in sorted(self.root.glob(".index-*.json")):
+            findings.append({"kind": "uncommitted_catalog_temp", "path": str(child)})
+        return findings
+
     def projects(self):
         return [dict(p) for p in self._projects]
 
