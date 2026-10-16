@@ -64,6 +64,7 @@ class MonoScanDesktop(tk.Tk):
         self._configure_theme()
         self._layout()
         self._refresh_projects()
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(100, self._poll_events)
 
     def _configure_theme(self):
@@ -468,6 +469,7 @@ class MonoScanDesktop(tk.Tk):
         if self.busy:
             return
         self.busy = True
+        self.projects_list.configure(state="disabled")
         self.cancel_event.clear()
         self.stage_state.set(title + " — işlem sürüyor")
         self.busy_bar.start(12)
@@ -485,6 +487,13 @@ class MonoScanDesktop(tk.Tk):
         if self.busy:
             self.cancel_event.set()
             self._write_log("İptal isteği gönderildi. Çalışan alt işlem durdurulacak.")
+
+    def _on_close(self):
+        if self.busy:
+            self._cancel()
+            self.stage_state.set("Önce çalışan işlem kapatılıyor; kaynak dosyalar korunuyor")
+            return
+        self.destroy()
 
     def _poll_events(self):
         while True:
@@ -530,6 +539,7 @@ class MonoScanDesktop(tk.Tk):
 
     def _finish_task(self):
         self.busy = False
+        self.projects_list.configure(state="normal")
         self.busy_bar.stop()
         for button in (self.run_button, self.refine_button, self.dense_button):
             button.configure(state="normal")
