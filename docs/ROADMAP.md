@@ -14,7 +14,7 @@
 | **N4** | ARKit VIO kamera öncülleri, CV koordinat dönüşümü, ARKit-guided seyrek SfM ve robust Sim(3) | **Hayır** | **Kodlandı; sentetik CI PASS.** VIO gerçek ölçüm/kovaryans iddiası yok; cihaz kabulü N9 |
 | **N5** | SciPy sparse BA: kamera + 3B nokta eşanlı optimizasyon, gauge sabitleme, dayanıklı hata, ARKit heuristik prior ve belirsizlik raporu | **Hayır** | **Kodlandı; sentetik CI doğrulama kapısı.** N5 kaynak ve önce/sonra hata kökeni korunur. Gerçek veri yalnız N9 |
 | **N6** | CPU plane-sweep MVS, çoklu derinlik tutarlılığı, voxel füzyonu, açık OBJ mesh ve PLY | **Hayır** | **Deneysel kodlandı.** Prosedürel sentetik 4-kamera görüntüleriyle geometrik test; 3–8 kamera, düşük çözünürlüklü CPU sınırı |
-| **N7** | Windows komutları, hata akışı, 3B önizleme/raporlama, iOS ekran/ZIP ve veri sözleşmesi bütünleşmesi | **Hayır** | UI sözleşmeleri, sahte veri göstermeme, offline/hata kurtarma kontrolü |
+| **N7** | Windows Tkinter proje yönetimi, güvenli iPhone ZIP import, aşama bazlı işlem hattı, gerçek PLY/OBJ önizleme, kanıt ve belirsizlik panelleri | **Hayır** | **İlk arayüz kodlandı; Windows Tk açılış smoke testi ve Swift ZIP→N7 import sözleşmesi CI PASS.** Son ergonomik ve gerçek cihaz kabulü bekliyor |
 | **N8** | Sentetik uçtan uca regresyon, Windows/Linux CI, kaynak güvenliği, paketleme hazırlığı, performans profilleme | **Hayır** | Örneklemeye bağımlı olmayan test seti, sürüm/bağımlılık kontrolü; gerçek sonuç iddiası yok |
 | **N9 — SON** | Gerçek iPhone 11/Xcode derlemesi ve cihaz kabulü, gerçek RGB+ARKit çekimi, **ilk gerçek fotoğraf analizi**, bağımsız referansla ölçüm doğrulaması, saha performansı ve kullanıcı kabulü | **Evet, yalnızca burada** | Veri/izlenebilirlik, görsel geometri, cihaz ve metrik hatalar kayıtlı; başarısızlık açıkça raporlanmalı |
 
@@ -22,7 +22,8 @@
 **N4:** ARKit VIO pozlarını doğrudan kullanan native guided sparse mod, robust Sim(3) hizalama ve bilinmeyen kovaryans beyanı kodlandı. Sentetik regresyon mevcut; gerçek cihaz/gerçek ölçüm kabulü N9'da. Ayrıntı: [N4_ARKIT_VIO_FUSION.md](N4_ARKIT_VIO_FUSION.md).
 **N5:** Deneysel sparse BA motoru yazıldı; sentetik CI/güvenlik doğrulaması yapılıyor. [N5 BA sözleşmesi](N5_SPARSE_BUNDLE_ADJUSTMENT.md). Gerçek fotoğraf kabulü yok.
 **N6:** CPU plane-sweep, farklı kameralarda derinlik tutarlılığı, voxel füzyonu ve açık mesh kodlandı. Sentetik testler ve CI doğrulanıyor. [N6 Dense MVS sözleşmesi](N6_DENSE_MVS.md).
-**N7–N8:** Henüz tamamlanmış kabul edilmez; geliştirme yapılacak.
+**N7:** Çevrimdışı Windows Tkinter iş istasyonu ilk sürümü ve iPhone ZIP sözleşmesi kodlandı; yalnız sentetik headless testler ve Windows Tk açılış smoke testi tamam. [N7 arayüz entegrasyonu](N7_WINDOWS_WORKSTATION.md). Gerçek fotoğraf ve fiziksel cihaz kabulü yalnız N9.
+**N8:** Henüz tamamlanmadı; sentetik uçtan uca/performans/erişilebilirlik ve paketleme bekliyor.
 **N9:** Bilinçli olarak ertelendi. Hiçbir erken aşamada kullanıcıdan fotoğraf isteme, gerçek sahne deneyi veya gerçek fotoğraf üzerinden model performansı iddiası oluşturma.
 
 ## Ara aşama doğrulama standardı
