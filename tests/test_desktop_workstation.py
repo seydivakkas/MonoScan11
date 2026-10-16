@@ -137,6 +137,8 @@ class WindowsDesktopSmokeTests(unittest.TestCase):
                 self.assertEqual(window.stage_list.size(), 4)
                 self.assertIsNone(window.preview_model)
                 self.assertIn("Henüz", window.inspector.get("1.0", "end"))
+                window._mark_stage("reconstruct", "KISMİ")
+                self.assertIn("KISMİ", window.stage_list.get(1))
             finally:
                 window.destroy()
 
@@ -305,6 +307,9 @@ class PipelineStageTests(unittest.TestCase):
             self.assertEqual(events[-1]["event"], "finished")
             self.assertTrue(Path(result["run"]).is_dir())
             self.assertEqual(events[3]["status"], "PARTIAL")
+            self.assertEqual(result["state"], "PARTIAL")
+            self.assertEqual(result["partial_stages"], ["reconstruct", "refine", "dense"])
+            self.assertEqual(events[-1]["status"], "PARTIAL")
 
     def test_pipeline_propagates_failure_with_no_fake_success(self):
         with tempfile.TemporaryDirectory() as td:
