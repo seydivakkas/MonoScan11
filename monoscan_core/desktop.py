@@ -63,7 +63,10 @@ class MonoScanDesktop(tk.Tk):
         self.stage_state = tk.StringVar(value="Henüz işlem başlatılmadı")
         self._configure_theme()
         self._layout()
+        self._configure_keyboard()
         self._refresh_projects()
+        for finding in self.catalog.recovery_findings():
+            self._write_log("KURTARMA İNCELEMESİ: " + finding["kind"] + " — " + finding["path"])
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(100, self._poll_events)
 
@@ -87,6 +90,11 @@ class MonoScanDesktop(tk.Tk):
                         padding=(14, 8))
         theme.map("TNotebook.Tab", background=[("selected", "#315d72")])
         theme.configure("Horizontal.TProgressbar", troughcolor=PANEL, background=ACCENT)
+        # Visible keyboard focus; native Tk accessibility remains subject to N9 review.
+        theme.map("TButton", relief=[("focus", "solid")],
+                  bordercolor=[("focus", "#e6f1f9")],
+                  lightcolor=[("focus", "#e6f1f9")])
+        theme.map("TCombobox", bordercolor=[("focus", "#e6f1f9")])
 
     def _layout(self):
         header = tk.Frame(self, bg=BG, height=92)
@@ -111,6 +119,33 @@ class MonoScanDesktop(tk.Tk):
     def _heading(self, parent, text):
         tk.Label(parent, text=text, bg=PANEL, fg=ACCENT,
                  font=("Segoe UI Semibold", 13)).pack(anchor="w", padx=12, pady=(13, 7))
+
+    def _configure_keyboard(self):
+        """Real keyboard actions, not menu decorations; never steal text entry keys."""
+        self.bind_all("<Control-o>", lambda event: self._import_zip())
+        self.bind_all("<Control-l>", lambda event: self._link_folder())
+        self.bind_all("<Control-r>", lambda event: self._refresh_runs())
+        self.bind_all("<F5>", lambda event: self._start_pipeline())
+        self.bind_all("<Escape>", lambda event: self._cancel())
+        self.bind_all("<F1>", lambda event: self._show_keyboard_help())
+        self.bind_all("<Control-plus>", lambda event: self._adjust_zoom(1.12))
+        self.bind_all("<Control-minus>", lambda event: self._adjust_zoom(1/1.12))
+        self.bind_all("<Control-equal>", lambda event: self._adjust_zoom(1.12))
+
+    def _show_keyboard_help(self):
+        messagebox.showinfo(
+            "Klavye erişimi — N8",
+            "Tab / Shift+Tab: denetimler arasında geçiş\\n"
+            "Ctrl+O: iPhone ZIP içe aktar\\n"
+            "Ctrl+L: klasör bağla\\n"
+            "Ctrl+R: modelleri yenile\\n"
+            "F5: sentetik işlem hattını başlat\\n"
+            "Esc: mevcut işlemi iptal et\\n"
+            "3B tuval odaktayken yön tuşları: döndür\\n"
+            "Ctrl+Plus / Ctrl+Minus: yakınlaş / uzaklaş\\n"
+            "F1: bu klavye rehberi\\n"
+            "N9 öncesi gerçek fotoğraf ve ekran okuyucu kabulü yapılmaz."
+        )
 
     def _project_panel(self, parent):
         self._heading(parent, "Projeler")
@@ -147,15 +182,21 @@ class MonoScanDesktop(tk.Tk):
         self.runs_combo = ttk.Combobox(parent, state="readonly", width=48)
         self.runs_combo.pack(fill="x", padx=10, pady=(3, 5))
         self.runs_combo.bind("<<ComboboxSelected>>", self._selected_run)
-        self.canvas = tk.Canvas(parent, bg="#07131d", highlightthickness=0)
+        self.canvas = tk.Canvas(parent, bg="#07131d", highlightthickness=2,
+                                highlightbackground="#233b4a", highlightcolor="#bde9f3",
+                                takefocus=1)
         self.canvas.pack(fill="both", expand=True, padx=10, pady=5)
         self.canvas.bind("<Configure>", lambda e: self._render_preview())
         self.canvas.bind("<ButtonPress-1>", self._begin_rotate)
         self.canvas.bind("<B1-Motion>", self._rotate)
         self.canvas.bind("<MouseWheel>", self._wheel)
+        self.canvas.bind("<Left>", lambda event: self._key_rotate(-0.12, 0))
+        self.canvas.bind("<Right>", lambda event: self._key_rotate(0.12, 0))
+        self.canvas.bind("<Up>", lambda event: self._key_rotate(0, -0.12))
+        self.canvas.bind("<Down>", lambda event: self._key_rotate(0, 0.12))
         self.canvas.bind("<Button-4>", lambda e: self._adjust_zoom(1.10))
         self.canvas.bind("<Button-5>", lambda e: self._adjust_zoom(1/1.10))
-        tk.Label(parent, text="Sürükle: döndür  ·  Tekerlek: yakınlaş  ·  Sahte geometri yok",
+        tk.Label(parent, text="Sürükle veya yön tuşları: döndür · Tekerlek / Ctrl +/-: yakınlaş",
                  bg=PANEL, fg=MUTED).pack(anchor="w", padx=12, pady=(2, 5))
         tabs = ttk.Notebook(parent)
         tabs.pack(fill="both", padx=10, pady=(2, 10), expand=False)
@@ -361,7 +402,13 @@ class MonoScanDesktop(tk.Tk):
             self.canvas.create_text(w/2, h/2, text=str(exc), fill="#ff9c9c")
 
     def _begin_rotate(self, event):
+        self.canvas.focus_set()
         self.mouse = (event.x, event.y)
+
+    def _key_rotate(self, dx, dy):
+        self.yaw += dx
+        self.pitch = max(-1.45, min(1.45, self.pitch + dy))
+        self._render_preview()
 
     def _rotate(self, event):
         if self.mouse:
