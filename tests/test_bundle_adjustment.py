@@ -138,6 +138,34 @@ class SparseBATests(unittest.TestCase):
             self.assertTrue(Path(payload["run"]).joinpath("optimization.json").exists())
             self.assertFalse(payload["real_world_validated"])
 
+    def test_nearly_exact_input_is_not_perturbed_or_falsely_claimed_as_optimized(self):
+        with tempfile.TemporaryDirectory() as td:
+            source = synthetic_run(td)
+            camera_doc = json.loads((source / "cameras.json").read_text())
+            records = {c["image"]: c for c in camera_doc["cameras"]}
+            tracks_path = source / "tracks.json"
+            tracks = json.loads(tracks_path.read_text())
+            for track in tracks:
+                point = np.asarray(track["xyz"], float)
+                for observation in track["observations"]:
+                    camera = records[observation["image"]]
+                    k = np.asarray(camera["K"])
+                    pose = np.asarray(camera["camera_to_world_cv"])
+                    q = point - pose[:3, 3]
+                    observation["uv"] = [float(q[0] / q[2] * k[0, 0] + k[0, 2]),
+                                         float(q[1] / q[2] * k[1, 1] + k[1, 2])]
+            tracks_path.write_text(json.dumps(tracks))
+            out, report = bundle_adjust(source, max_nfev=30)
+            self.assertEqual(report["bundle_adjustment"], "skipped_already_consistent")
+            self.assertEqual(report["state"], "PARTIAL")
+            self.assertFalse(report["real_world_validated"])
+            saved_cameras = json.loads((out / "cameras.json").read_text())["cameras"]
+            self.assertTrue(all(c["ba_pose_optimized"] is False for c in saved_cameras))
+            optimized_tracks = json.loads((out / "tracks.json").read_text())
+            for original, refined in zip(tracks, optimized_tracks):
+                np.testing.assert_allclose(original["xyz"], refined["xyz"], atol=1e-12)
+            self.assertTrue((out / "optimization.json").is_file())
+
     def test_refinement_iteration_budget_fail_closed(self):
         with tempfile.TemporaryDirectory() as td:
             source = synthetic_run(td)
