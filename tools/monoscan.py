@@ -206,6 +206,14 @@ def main(argv: list[str] | None = None) -> int:
     refine.add_argument("run", type=Path)
     refine.add_argument("--prior-weight", type=float, default=2.0)
     refine.add_argument("--max-nfev", type=int, default=70)
+    dense = subs.add_parser("dense", help="N6 deneysel CPU MVS: sentetik görüntü derinliği, voxel ve açık OBJ")
+    dense.add_argument("run", type=Path, help="N3/N4/N5 sparse model directory")
+    dense.add_argument("session", type=Path, help="Original synthetic session containing images")
+    dense.add_argument("--min-depth", type=float, default=1.0)
+    dense.add_argument("--max-depth", type=float, default=5.0)
+    dense.add_argument("--planes", type=int, default=40)
+    dense.add_argument("--max-side", type=int, default=192)
+    dense.add_argument("--voxel-size", type=float, default=0.08)
     ins = subs.add_parser("inspect", help="Native rekonstrüksiyon klasörü özetini oku")
     ins.add_argument("run", type=Path)
     alignment = subs.add_parser("align-arkit", help="PHOTO_ONLY kameralarını ARKit VIO'ya Sim(3) ile hizala; yalnız tanı")
@@ -259,6 +267,18 @@ def main(argv: list[str] | None = None) -> int:
                 output, summary = bundle_adjust(args.run, prior_weight=args.prior_weight,
                                                 max_nfev=args.max_nfev)
             except BundleAdjustmentError as exc:
+                raise SessionError(str(exc)) from exc
+            print(json.dumps({"run": str(output), **summary}, indent=2, ensure_ascii=True))
+            return 0
+        elif args.action == "dense":
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+            from monoscan_core.dense_mvs import DenseMVSError, reconstruct_dense
+            try:
+                output, summary = reconstruct_dense(
+                    args.run, args.session, min_depth=args.min_depth,
+                    max_depth=args.max_depth, planes=args.planes,
+                    max_side=args.max_side, voxel_size=args.voxel_size)
+            except DenseMVSError as exc:
                 raise SessionError(str(exc)) from exc
             print(json.dumps({"run": str(output), **summary}, indent=2, ensure_ascii=True))
             return 0
