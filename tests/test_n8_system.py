@@ -74,7 +74,7 @@ class N8RecoveryTests(unittest.TestCase):
             self.assertEqual(catalog.projects(), [])
 
     def test_interrupted_import_rolls_back_staging_without_publishing(self):
-        from tests.test_desktop_workstation import create_fixture, build_zip
+        from test_desktop_workstation import create_fixture, build_zip
         with tempfile.TemporaryDirectory() as td:
             source, manifest, images = create_fixture(td)
             archive = Path(td) / "synthetic.zip"
