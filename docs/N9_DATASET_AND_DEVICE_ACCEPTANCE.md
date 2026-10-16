@@ -39,7 +39,7 @@ yayınlama hakkı vermez. Dataset görüntülerini GitHub'a yüklemeyin.
   holdout RMSE/medyan/p95 üretir; tanımlanmamış kaynak doğruluğuna
   otomatik sertifika vermez.
 - `tests/test_n9_public_adapter.py`,
-  `tests/test_n9_reference.py`, `tests/test_n9_fetch.py, <bt>tests/test_n9_iphone_photo_proxy.py<bt>`:
+  `tests/test_n9_reference.py`, `tests/test_n9_fetch.py, `tests/test_n9_iphone_photo_proxy.py``:
   sentetik sözleşme, sahte metrik kabulü reddi, veri dosyası bozulması
   ve platform regresyonu. **Bunlar gerçek veri deneyleri değil.**
 
@@ -63,12 +63,12 @@ Gerçek iPhone 13 RGB örnek arşivi için **ayrı**, ARKit'siz yol:
 python scripts/n9_iphone_photo_proxy.py --download-to "C:\N9-Data\iphone13-olympic.zip" --session-out "C:\N9-Trials\iphone13-photo-only" --training-terms-reviewed --frame-limit 24
 
 # KALİBRE EDİLMİŞ bir gerçek odak uzunluğunuz (piksel) varsa:
-python tools/monoscan.py reconstruct "C:\N9-Trials\iphone13-photo-only" --mode photo-only --focal-px 1200
+python tools/monoscan.py reconstruct "C:\N9-Trials\iphone13-photo-only" --mode photo-only --focal-px "$env:MONOSCAN_CALIBRATED_FOCAL_PX"
 ```
 
-**1200 px yukarıdaki komutta yalnız sözdizimi örneğidir**, gerçek
-iPhone 13 intrinsics ölçüsü değildir; kullanıcı bağımsız kaynaktan
-doğrulanmış focal_px olmadan bu sayı ile metrik kalite iddia edemez.
+Buradaki ortam değişkeni gerçek, doğrulanmış piksel odak uzunluğunu
+kullanıcı tarafından sağlamalıdır; MonoScan11 odağı tahmin edip metrik
+kalibrasyon kanıtı üretmez.
 Bu arşivin çalışma konteynerinde doğrudan indirilmesi denendi ancak
 indirme gerçekleşmedi; gerçek veri üzerinden MonoScan11 test edildiği
 iddia edilmez.
