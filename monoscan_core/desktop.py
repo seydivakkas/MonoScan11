@@ -234,10 +234,9 @@ class MonoScanDesktop(tk.Tk):
         if stage not in indices:
             return
         n = indices[stage]
-        name = self.stage_list.get(n)[2:]
-        name = name.split(" · ", 1)[-1] if name.startswith(("ÇALIŞIYOR", "BİTTİ", "HATA")) else name
+        names = ("Doğrulama", "N3 / N4 · Seyrek", "N5 · BA", "N6 · MVS")
         self.stage_list.delete(n)
-        self.stage_list.insert(n, mark + "  " + name)
+        self.stage_list.insert(n, mark + "  " + names[n])
 
     def _current(self):
         selected = self.projects_list.curselection()
