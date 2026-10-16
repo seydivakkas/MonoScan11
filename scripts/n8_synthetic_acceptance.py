@@ -16,11 +16,13 @@ import platform
 import tempfile
 import time
 import tracemalloc
+import sys
 import zipfile
 
 import cv2
 import numpy as np
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from monoscan_core.workspace import ProjectCatalog
 from monoscan_core.workflow import discover_runs, run_pipeline, diagnostics
 from monoscan_core.preview import geometry_for_run
