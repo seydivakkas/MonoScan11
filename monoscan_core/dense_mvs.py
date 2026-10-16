@@ -130,7 +130,7 @@ def _warp_cost(reference, target, xyz, window):
 
 
 def plane_sweep(views, *, min_depth, max_depth, planes=40, window=5,
-                min_texture=8.0, min_margin=0.6, max_photometric_cost=18.0):
+                min_texture=5.0, min_margin=0.12, max_photometric_cost=40.0):
     """Estimate every view's depth by sampling *images*, not procedural truth.
 
     Two independently projected target frames must support each candidate.
@@ -173,7 +173,9 @@ def plane_sweep(views, *, min_depth, max_depth, planes=40, window=5,
             best = np.where(better, candidate, best)
             selected = np.where(better, p, selected)
             support = np.where(better, valid_count, support)
-        margin = second - best
+        margin = np.zeros_like(best)
+        finite_score = np.isfinite(best) & np.isfinite(second)
+        np.subtract(second, best, out=margin, where=finite_score)
         eligible = (selected > 0) & (selected < planes - 1) & textured & (
             margin >= min_margin) & (best <= max_photometric_cost) & np.isfinite(best)
         depth = np.where(eligible, depth_planes[np.maximum(selected, 0)], 0).astype(np.float32)
