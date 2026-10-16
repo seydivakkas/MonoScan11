@@ -121,9 +121,10 @@ class DenseMVSTests(unittest.TestCase):
                 self.assertTrue((out / name).is_file(), name)
             for name, content in originals.items():
                 self.assertEqual((run / name).read_bytes(), content)
-            depths = np.load(out / "depth_maps.npz", allow_pickle=False)
-            self.assertIn("depth_0", depths.files)
-            self.assertFalse(np.isnan(depths["depth_0"]).any())
+            # Windows keeps .npz files locked while NpzFile remains open.
+            with np.load(out / "depth_maps.npz", allow_pickle=False) as depths:
+                self.assertIn("depth_0", depths.files)
+                self.assertFalse(np.isnan(depths["depth_0"]).any())
             other, _ = reconstruct_dense(
                 run, root, min_depth=1.7, max_depth=3., planes=43,
                 max_side=112, voxel_size=0.10)
