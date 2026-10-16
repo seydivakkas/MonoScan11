@@ -284,7 +284,7 @@ class PipelineStageTests(unittest.TestCase):
             self.assertEqual(len([x for x in events if x["event"] == "complete"]), 4)
             self.assertEqual(events[-1]["event"], "finished")
             self.assertTrue(Path(result["run"]).is_dir())
-            self.assertEqual(events[2]["status"], "PARTIAL")
+            self.assertEqual(events[3]["status"], "PARTIAL")
 
     def test_pipeline_propagates_failure_with_no_fake_success(self):
         with tempfile.TemporaryDirectory() as td:
