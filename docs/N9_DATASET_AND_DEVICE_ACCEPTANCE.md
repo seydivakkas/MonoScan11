@@ -14,6 +14,7 @@ ile testler yalnızca "public real-data proxy" olabilir.
 | [Apple ARKitScenes](https://github.com/apple-aiml-research/ARKitScenes) | iPad Pro, RGB, .pincam, .traj, derinlik, bazı sekanslarda FARO lazer | Resmî download_data.py, veri/yazılım kullanım haklarının ayrıca incelenmesi | iPhone 11 verisi değildir |
 | [ScaleMaster](https://scalemaster-dataset.github.io/) | iPhone 14 Pro RGB/ARKit, bazı sahnelerde bağımsız Livox | Bireysel sekans erişimi/Git LFS/anket | iPhone 11 kabulü değildir |
 | [TMO](https://github.com/JH-Choi/TMO) | iPhone 13 Pro RGB/pose/LiDAR | Google Drive ve kullanım koşulları | iPhone 11 kabulü değildir |
+| [Pix4D Olympic Flame](https://support.pix4d.com/hc/en-us/articles/360000235126) | **Gerçek iPhone 13**: 117 JPEG, 208 MB ZIP, işlenmiş OPF/geometri | Resmî [ZIP](https://data.pix4d.com/misc/example_datasets/olympic_flame.zip); örneklerin kişisel/mesleki **eğitim kullanımı** koşulları geçerli | RGB fotoğraf için iyi PHOTO_ONLY proxy; **ARKit VIO veya iPhone 11 değildir** |
 
 Verilerin hiçbirinin kullanımı otomatik lisans devri ya da yeniden
 yayınlama hakkı vermez. Dataset görüntülerini GitHub'a yüklemeyin.
@@ -38,7 +39,7 @@ yayınlama hakkı vermez. Dataset görüntülerini GitHub'a yüklemeyin.
   holdout RMSE/medyan/p95 üretir; tanımlanmamış kaynak doğruluğuna
   otomatik sertifika vermez.
 - `tests/test_n9_public_adapter.py`,
-  `tests/test_n9_reference.py`, `tests/test_n9_fetch.py`:
+  `tests/test_n9_reference.py`, `tests/test_n9_fetch.py, <bt>tests/test_n9_iphone_photo_proxy.py<bt>`:
   sentetik sözleşme, sahte metrik kabulü reddi, veri dosyası bozulması
   ve platform regresyonu. **Bunlar gerçek veri deneyleri değil.**
 
@@ -54,6 +55,23 @@ python scripts/n9_fetch_arkitscenes.py --video-id 41069046 --split Validation --
 # Gerçek görüntülerin özgün pose/intrinsics eşleştirmesi; başarısız olabilir:
 python scripts/n9_public_trial.py --source "C:\N9-Data\ARKitScenes\41069046" --output "C:\N9-Trials\iPadProxy01" --video-id 41069046 --max-frames 24
 ```
+
+Gerçek iPhone 13 RGB örnek arşivi için **ayrı**, ARKit'siz yol:
+
+```powershell
+# Resmî ZIP kullanım haklarını inceledikten sonra:
+python scripts/n9_iphone_photo_proxy.py --download-to "C:\N9-Data\iphone13-olympic.zip" --session-out "C:\N9-Trials\iphone13-photo-only" --training-terms-reviewed --frame-limit 24
+
+# KALİBRE EDİLMİŞ bir gerçek odak uzunluğunuz (piksel) varsa:
+python tools/monoscan.py reconstruct "C:\N9-Trials\iphone13-photo-only" --mode photo-only --focal-px 1200
+```
+
+**1200 px yukarıdaki komutta yalnız sözdizimi örneğidir**, gerçek
+iPhone 13 intrinsics ölçüsü değildir; kullanıcı bağımsız kaynaktan
+doğrulanmış focal_px olmadan bu sayı ile metrik kalite iddia edemez.
+Bu arşivin çalışma konteynerinde doğrudan indirilmesi denendi ancak
+indirme gerçekleşmedi; gerçek veri üzerinden MonoScan11 test edildiği
+iddia edilmez.
 
 256×192 RGB örnekleri SIFT için yetersiz kalabilir; bu durumda
 N4 model üretmek zorunda değildir. Kullanıcıdan gerçek iPhone görüntüleri
