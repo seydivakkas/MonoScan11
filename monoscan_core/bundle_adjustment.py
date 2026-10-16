@@ -275,7 +275,11 @@ def bundle_adjust(run, *, prior_weight=2.0, max_nfev=70, f_scale_px=2.0):
     after = np.linalg.norm(after_px - uv, axis=1)
     if (np.any(after_z <= 1e-5) or not np.isfinite(after).all()
             or float(np.median(after)) > float(np.median(before)) + 1e-5):
-        raise BundleAdjustmentError("BA rejected: negative depth or worse median reprojection")
+        raise BundleAdjustmentError(
+            "BA rejected: cheirality-invalid=" + str(int(np.sum(after_z <= 1e-5))) +
+            ", median-initial-px=" + f"{float(np.median(before)):.5f}" +
+            ", median-optimized-px=" + f"{float(np.median(after)):.5f}"
+        )
     optimized_baseline = float(np.linalg.norm(_camera_center(optimized_poses[1]) -
                                              _camera_center(optimized_poses[0])))
     if not (0.95 <= optimized_baseline / baseline <= 1.05) and mode == "photo-only":
