@@ -83,3 +83,7 @@ See [N4 ARKit VIO fusion](N4_ARKIT_VIO_FUSION.md). The existing iPhone v1 sessio
 ## N8 source, safety and acceptance
 
 [Procedural end-to-end system acceptance](N8_SYNTHETIC_ACCEPTANCE.md) calls the actual native N4/N5/N6 modules through the N7 workstation controller, validates immutable input bytes, repeatability and honest partial/skipped optimizer outcomes. Source-only Windows ZIP with SHA manifest is not a standalone installer. No real images, iPhone hardware or physical accuracy testing before N9.
+
+## N9 public real-data source adapter and unclosed physical acceptance
+
+[Evidence and dataset gate](N9_DATASET_AND_DEVICE_ACCEPTANCE.md): Apple ARKitScenes (iPad Pro, not iPhone 11) `lowres_wide`/`.traj`/`.pincam` adapter, explicit data-rights gate, immutable RGB SHA provenance, and independent rigid no-scale heldout 3D check. The physical device, real iPhone 11 capture, Xcode build, Windows hardware/user acceptance, optics and independent survey are **not verified** and therefore cannot make N9 complete.
