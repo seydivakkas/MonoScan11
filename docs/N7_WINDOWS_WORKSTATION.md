@@ -43,8 +43,8 @@ Katalog kaydını kaldırma hiçbir görüntü, ZIP veya üretilmiş modeli silm
 
 **iPhone ZIP içe aktarımı:** Swift `ZIPStore.swift` sözleşmesi korunur:
 `session.json` v1, `images/<file>`, isteğe bağlı
-`project.json` ve `arkit_sparse.ply`. Girdi SHA doğruluğu iPhone ZIP
-CRC doğrulaması ile denetlenir; ZIP adı/traversal, yinelenen büyük-küçük harf,
+`project.json` ve `arkit_sparse.ply`. ZIP paketinin bütünlüğü ZIP CRC32 ile denetlenir;
+N3/N4/N5 kaynak görüntü SHA-256 değerleri N6 işleminde ayrıca doğrulanır. ZIP adı/traversal, yinelenen büyük-küçük harf,
 şifreli/sıkıştırılmış veya beklenmeyen dosya, symlink ve boyut limitleri
 kontrol edilmeden dosya çıkarılmaz. **Sadece Swift'in ürettiği method-0 ZIP32**
 kabul edilir; genel ZIP açıcı yapılması amaçlanmaz. İçe alındıktan sonra
@@ -61,7 +61,9 @@ başarılı işaretlenmez.
    voxel ve OBJ mesh.
 
 Her bir aşama için `start`, `complete`, `failed`, `cancelled`
-olayları üretilir. Native çekirdek henüz gerçek alt-adım yüzdeleri vermediği
+olayları üretilir. Native raporda `PARTIAL` durumu varsa arayüz bunu
+**KISMİ** olarak işaretler; aşama komutunun hata vermemesi eksiksiz
+3B model veya BA yakınsaması iddiası değildir. Native çekirdek henüz gerçek alt-adım yüzdeleri vermediği
 için arayüz yalnız **aşama durumu** ve belirsiz (indeterminate) işlem çubuğu
 gösterir; sahte %90 gibi bir ilerleme üretilmez. İptal talebi yerel child
 process'e gönderilir; önceden tamamlanmış sonuçlar saklanır ve `SUCCESS`
