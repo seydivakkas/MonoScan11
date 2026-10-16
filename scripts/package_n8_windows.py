@@ -48,7 +48,7 @@ def package_manifest(root=ROOT):
         for item in folder.rglob("*"):
             if not item.is_file():
                 continue
-            if item.is_symlink() or any(p.is_symlink() for p in item.relative_to(root).parents if (root/p).is_symlink()):
+            if item.is_symlink() or any((root / p).is_symlink() for p in item.relative_to(root).parents):
                 raise PackageError("Symbolic link in distribution source")
             if item.suffix not in ALLOWED_SUFFIXES or "__pycache__" in item.parts:
                 continue
