@@ -61,3 +61,47 @@ jobs:
                   assert sum(n.startswith('images/') for n in members) == 3
           print('PASS: Swift ZIPStore -> strict N7 import -> native Python validator')
           PY
+
+  n8-synthetic-e2e:
+    name: N8 procedural full N4→N5→N6→N7 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install native CPU dependencies
+        run: python -m pip install -r requirements-native.txt
+      - name: Run original native algorithms on only procedurally generated image ZIP
+        run: python scripts/n8_synthetic_acceptance.py --repeat 2 --max-side 112 --planes 36 --output n8-acceptance.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: n8-synthetic-report-${{ matrix.os }}
+          path: n8-acceptance.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  n8-source-package:
+    name: N8 reproducible source-only ZIP / SHA-256
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Assemble deterministic offline-capable Windows SOURCE bundle
+        run: python scripts/package_n8_windows.py --output dist/MonoScan11-N8-source.zip
+      - name: Verify SOURCE bundle SHA-256, no user data
+        run: python scripts/package_n8_windows.py --verify dist/MonoScan11-N8-source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MonoScan11-N8-source-only
+          path: dist/MonoScan11-N8-source.zip
+          retention-days: 14
