@@ -1,4 +1,4 @@
-# MonoScan11 — native SfM migration (N0–N7)
+# MonoScan11 — native SfM migration (N0–N8)
 
 **Branch:** `feature/native-sfm-n0-n3` | **Status:** experimental / no real-device validation
 
@@ -19,6 +19,7 @@ Native pipeline:
 6. N5: robust sparse BA with simultaneous camera and point optimization, fixed photo gauge and explicitly heuristic ARKit priors
 7. N6: CPU plane-sweep depth, photometric and reciprocal depth gates, multi-view voxel fusion and open-grid OBJ; synthetic-only acceptance
 8. N7: offline Tkinter Windows project station, strict Swift ZIPStore v1 importer, N3–N6 stage UI, read-only point/mesh and provenance diagnostics
+9. N8: real-native synthetic ZIP-to-OBJ repeatability, profiling, crash recovery, keyboard UI and source-only distribution integrity
 
 Constraints:
 - PHOTO_ONLY has **arbitrary scale** without an external scale anchor.
@@ -78,3 +79,7 @@ See [N4 ARKit VIO fusion](N4_ARKIT_VIO_FUSION.md). The existing iPhone v1 sessio
 ## N7 source and acceptance boundaries
 
 [Native Windows workstation](N7_WINDOWS_WORKSTATION.md) composes the existing native SfM modules; it never replaces them with mock rendering. ZIP archives preserve iOS `session.json` schema v1. Stage statuses correspond to subprocess completion rather than fabricated percentages. Local project and geometry files are immutable on read. The UI requires explicit synthetic-session acknowledgement while N9 physical/real-photo acceptance remains deferred.
+
+## N8 source, safety and acceptance
+
+[Procedural end-to-end system acceptance](N8_SYNTHETIC_ACCEPTANCE.md) calls the actual native N4/N5/N6 modules through the N7 workstation controller, validates immutable input bytes, repeatability and honest partial/skipped optimizer outcomes. Source-only Windows ZIP with SHA manifest is not a standalone installer. No real images, iPhone hardware or physical accuracy testing before N9.
