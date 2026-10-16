@@ -1,4 +1,4 @@
-# MonoScan11 — native SfM migration (N0–N6)
+# MonoScan11 — native SfM migration (N0–N7)
 
 **Branch:** `feature/native-sfm-n0-n3` | **Status:** experimental / no real-device validation
 
@@ -18,6 +18,7 @@ Native pipeline:
 5. N4: strict ARKit VIO pose prior loader, opt-in ARKit-guided triangulation and robust Sim(3) diagnostics
 6. N5: robust sparse BA with simultaneous camera and point optimization, fixed photo gauge and explicitly heuristic ARKit priors
 7. N6: CPU plane-sweep depth, photometric and reciprocal depth gates, multi-view voxel fusion and open-grid OBJ; synthetic-only acceptance
+8. N7: offline Tkinter Windows project station, strict Swift ZIPStore v1 importer, N3–N6 stage UI, read-only point/mesh and provenance diagnostics
 
 Constraints:
 - PHOTO_ONLY has **arbitrary scale** without an external scale anchor.
@@ -73,3 +74,7 @@ See [N4 ARKit VIO fusion](N4_ARKIT_VIO_FUSION.md). The existing iPhone v1 sessio
 ## N6 source and boundary
 
 [Native Dense MVS technical contract](N6_DENSE_MVS.md) implements the limited, low-resolution CPU reconstruction, not a tested dense reconstruction of a real iPhone scene. N9 remains the first physical-device and real-photo acceptance phase. The mesh is explicitly an open grid surface, not a watertight object.
+
+## N7 source and acceptance boundaries
+
+[Native Windows workstation](N7_WINDOWS_WORKSTATION.md) composes the existing native SfM modules; it never replaces them with mock rendering. ZIP archives preserve iOS `session.json` schema v1. Stage statuses correspond to subprocess completion rather than fabricated percentages. Local project and geometry files are immutable on read. The UI requires explicit synthetic-session acknowledgement while N9 physical/real-photo acceptance remains deferred.
