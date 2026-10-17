@@ -47,6 +47,12 @@ def reconstruct_arkit_guided(root: Path):
         """Extend only if independent projection agrees (no invented track links)."""
         if kp in observed[image_id]:
             return False
+        # One triangulated 3D landmark has at most ONE observed keypoint
+        # in a given camera. Multi-pair extension formerly permitted several
+        # image keypoints to claim the same landmark, which N5 correctly
+        # rejects as an ambiguous BA residual / duplicate track view.
+        if landmark_id in observed[image_id].values():
+            return False
         xyz = np.asarray([points[landmark_id]["xyz"]])
         try:
             uv = project(xyz, frames[image_id].k, poses[image_id])[0]
@@ -151,6 +157,11 @@ def reconstruct_arkit_guided(root: Path):
     result_points = {pid: p for pid, p in points.items() if pid in keep}
     final_obs = {idx: {kp: pid for kp, pid in final_obs[idx].items() if pid in keep}
                  for idx in registered}
+    # Fail closed on data-integrity defects at N4, BEFORE writing a model
+    # which downstream N5 cannot optimize. Do not silently discard
+    # conflicting real measurements after seeing the results.
+    if any(len(set(obs.values())) != len(obs) for obs in final_obs.values()):
+        raise ReconstructionError("Duplicate landmark observation within one camera")
     # Recompute residual on EXACT retained observations, no extrapolated metric claims.
     residuals = [
         float(np.linalg.norm(
