@@ -1,0 +1,70 @@
+name: N9-A limited real public RGB trial (NO iPhone11 physical acceptance)
+
+# One controlled initial run on addition of this workflow; future runs only
+# through a reviewed manual dispatch. Prevent repeated real dataset downloads
+# on every ordinary source-code push.
+on:
+  push:
+    branches: [feature/native-sfm-n0-n3]
+    paths:
+      - '.github/workflows/n9a-real-public.yml'
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: 'Official ARKitScenes 8-digit video ID, Validation split'
+        type: string
+        required: true
+        default: '41069046'
+      dataset_license_reviewed:
+        description: 'I independently reviewed the official dataset license for this use'
+        type: boolean
+        required: true
+        default: false
+
+jobs:
+  n9a-real-proxy:
+    name: Real Apple iPad RGB + calibrated K/poses / physical iPhone11 NOT TESTED
+    runs-on: ubuntu-latest
+    timeout-minutes: 27
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline native CPU algorithm dependencies
+        run: python -m pip install -r requirements-native.txt
+      - name: Verify source terms and execute temporary local real-image experiment
+        id: trial
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Apple ARKitScenes LICENSE reviewed for this research-only
+          # workflow. Data is not redistributed, uploaded or published.
+          # Manual reruns require separate explicit license review.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dataset_license_reviewed }}" != "true" ]; then
+            echo 'N9-A BLOCKED: license review not confirmed for manual run'
+            exit 2
+          fi
+          VID='41069046'
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VID='${{ inputs.video_id }}'
+          fi
+          python scripts/n9a_real_public_ci.py \
+            --video-id "$VID" --split Validation --max-frames 16 \
+            --max-runtime-seconds 900 --license-reviewed \
+            --output n9a-real-public-evidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: n9a-public-real-RGB-json-evidence-only
+          path: n9a-real-public-evidence.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: State N9-B separately in build log
+        if: always()
+        run: |
+          echo "N9-B physical iPhone 11: NOT TESTED"
+          echo "N9-B physical Windows user acceptance: NOT TESTED"
+          echo "No real dataset RGB files or model assets were uploaded"
