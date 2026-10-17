@@ -221,28 +221,85 @@ def real_temporal_trial(output, *, license_reviewed=False, video_id="41069046",
                     report["n5"] = {"status":"FAIL", "error":str(exc)[:650]}
                 checkpoint()
                 registered = top["real_registered_views"]
-                if registered < 3 or registered > 8:
-                    report["n6"] = {
-                        "status":"SKIPPED_UNSUPPORTED_CAMERA_COUNT",
-                        "registered_camera_count":registered,
-                        "required_registered_cameras":"3–8",
-                    }
-                else:
-                    report["n6"] = {"status":"RUNNING",
-                                    "source":"N5 if available else N4"}
-                    checkpoint()
-                    try:
-                        from_run = n5path if n5path else sparse
+                dense_sparse = sparse
+                dense_session = session
+                report["n6"] = {
+                    "status": "PREPARING_REAL_N6_INPUT",
+                    "source_cohort": top["name"],
+                    "full_best_registered_cameras": registered,
+                    "independent_source": "Apple ARKitScenes real RGB/K/VIO",
+                    "real_world_validated": False,
+                }
+                checkpoint()
+                try:
+                    if registered > 8:
+                        # N6 prototype explicitly accepts only 3..8 cameras.
+                        # Reconstruct a separate, unmodified, source-derived
+                        # 8-frame N4 model from the SAME winning time window.
+                        # Never silently edit N4 cameras/tracks JSON or claim
+                        # that a 16-view N6 ran.
+                        original_label = top["name"]
+                        recipe = next((strategy, fraction)
+                                      for name, strategy, fraction in PREDECLARED_COHORTS
+                                      if name == original_label)
+                        small_session, small_audit = prepare_arkitscenes_session(
+                            source, root/"native-n6-8-camera", video_id=video_id,
+                            max_frames=8, selection_strategy=recipe[0],
+                            window_start_fraction=recipe[1],
+                            window_seconds=window_seconds)
+                        report["n6"]["subsequence_selection"] = small_audit["selection"]
+                        report["n6"]["subsequence_input_hash_ledger"] = hashlib.sha256(
+                            json.dumps({
+                                rec["file"]: rec["original_image_sha256"]
+                                for rec in small_audit["images"]
+                            },sort_keys=True).encode()).hexdigest()
+                        trial8 = evaluate_proxy_session(
+                            small_session, root/"native-n6-real-8-report",
+                            mode="arkit-guided", rights_reviewed=True)
+                        report["n6"]["subsequence_native_status"] = trial8["result"]
+                        rec8 = next((e for e in trial8["events"]
+                                     if e["stage"] == "reconstruct"), None)
+                        if not rec8:
+                            raise ValueError("8-frame real source N4 reconstruction failed: "+
+                                             str(trial8.get("failure",{}).get("reason","unknown")))
+                        dense_sparse, dense_session = Path(rec8["run"]), small_session
+                        raw8, hashes8 = _written_model(dense_sparse)
+                        report["n6"]["source_sparse_8_camera"] = _public_summary(raw8)
+                        report["n6"]["source_sparse_8_camera_sha256"] = hashes8
+                        registered = int(raw8.get("registered_images",0))
+                        # Separate explicit N5 attempt on 8-camera model.
+                        try:
+                            refine8 = run_command(["refine", dense_sparse], timeout=300)
+                            n5_8_path = Path(refine8["run"])
+                            n5_8, n5_8_sha = _written_model(n5_8_path)
+                            report["n6"]["eight_camera_refine"] = {
+                                "status":"OUTPUT_REVIEW_REQUIRED",
+                                "summary":_public_summary(n5_8),
+                                "artifact_sha256":n5_8_sha}
+                            dense_sparse = n5_8_path
+                        except Exception as exc:
+                            report["n6"]["eight_camera_refine"] = {
+                                "status":"FAIL",
+                                "error":str(exc)[:500]}
+                        checkpoint()
+                    if not 3 <= registered <= 8:
+                        report["n6"]["status"] = "SKIPPED_UNSUPPORTED_CAMERA_COUNT"
+                        report["n6"]["registered_camera_count"] = registered
+                    else:
+                        from_run = dense_sparse
                         minimum, maximum, count = _depth_from_real_sparse(from_run)
                         report["n6"]["depth_interval"] = [minimum, maximum]
                         report["n6"]["depth_derivation"] = (
-                            "N4/N5 observed positive camera-depth 10th/90th percentiles "
-                            "with 20%/25% guard bands; ARKit nominal units, NOT physical reference"
+                            "N4/N5 positive camera-depth 10th/90th percentiles "
+                            "with 20%/25% guard bands, ARKit nominal units "
+                            "(not independently measured meters)"
                         )
                         report["n6"]["positive_sparse_depth_samples"] = count
+                        report["n6"]["actual_input_registered_cameras"] = registered
+                        checkpoint()
                         t = time.monotonic()
                         out = run_command(
-                            ["dense", from_run, session,
+                            ["dense", from_run, dense_session,
                              "--min-depth", minimum, "--max-depth", maximum,
                              "--planes", 24, "--max-side", 96,
                              "--voxel-size", 0.08], timeout=360)
@@ -254,8 +311,9 @@ def real_temporal_trial(output, *, license_reviewed=False, video_id="41069046",
                             "artifact_sha256":hashes,
                             "real_world_validated":False,
                         })
-                    except Exception as exc:
-                        report["n6"].update({"status":"FAIL", "error":str(exc)[:650]})
+                except Exception as exc:
+                    report["n6"].update({"status":"FAIL", "error":
+                                          (type(exc).__name__+": "+str(exc).replace(str(root),"<EPHEMERAL>"))[:650]})
                 report["result"] = (
                     "PROXY_PARTIAL_REVIEW_REQUIRED" if
                     top["real_registered_views"] < top["image_count"]
