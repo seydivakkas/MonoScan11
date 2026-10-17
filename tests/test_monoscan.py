@@ -7,11 +7,9 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from colmap_models import ModelError, export_ply, inspect_model
 from geometry import GeometryError, project, synthetic_demo, triangulate, world_ray
-from monoscan import (SessionError, commands_for, image_dimensions, main,
-                      reconstruct, validate)
-from helpers import png_bytes, write_model
+from monoscan import SessionError, image_dimensions, main, validate
+from helpers import png_bytes
 
 
 K = [[800, 0, 320], [0, 800, 240], [0, 0, 1]]
@@ -46,7 +44,7 @@ class SessionTests(unittest.TestCase):
         self.assertEqual(report["images"], 3)
         self.assertEqual(report["pose_records"], 0)
         self.assertEqual(report["image_formats"], {".png": 3})
-        self.assertFalse(report["arkit_poses_used_by_colmap"])
+        self.assertFalse(report["arkit_poses_used_by_native"])
 
     def test_valid_manifest(self):
         self.add_manifest()
@@ -118,50 +116,21 @@ class SessionTests(unittest.TestCase):
         with self.assertRaisesRegex(SessionError, "HEIC"):
             validate(self.root)
 
-    def test_sparse_dry_run_does_not_create_workdir(self):
-        cmds = reconstruct(self.root, colmap="colmap", mode="sparse", gpu=False, dry_run=True)
-        self.assertEqual([c[1] for c in cmds], ["feature_extractor", "exhaustive_matcher", "mapper"])
+    def test_windows_cp1252_console_can_print_json(self):
+        import contextlib
+        import io
+        output = io.BytesIO()
+        # Simulates default Windows console/redirect codepage without Turkish glyphs.
+        console = io.TextIOWrapper(output, encoding="cp1252", write_through=True)
+        with contextlib.redirect_stdout(console):
+            self.assertEqual(main(["validate", str(self.root)]), 0)
+        payload = json.loads(output.getvalue().decode("cp1252"))
+        self.assertEqual(payload["images"], 3)
+
+    def test_arkit_guided_dry_run_requires_session(self):
+        self.assertEqual(main(["reconstruct", str(self.root), "--mode",
+                               "arkit-guided", "--dry-run"]), 1)
         self.assertFalse((self.root / "reconstruction").exists())
-        self.assertEqual(cmds[0][-1], "0")
-
-    def test_dense_plan(self):
-        cmds = commands_for(self.root, self.root / "reconstruction", "colmap", "dense", True)
-        self.assertEqual(len(cmds), 7)
-        self.assertEqual(cmds[-1][1], "poisson_mesher")
-
-    def test_dense_cpu_guard(self):
-        with self.assertRaisesRegex(SessionError, "CUDA"):
-            reconstruct(self.root, colmap=sys.executable, mode="dense", gpu=False, dry_run=False)
-
-    def test_existing_results_never_overwritten(self):
-        (self.root / "reconstruction").mkdir()
-        (self.root / "reconstruction" / "data.txt").write_text("keep", encoding="utf-8")
-        with self.assertRaisesRegex(SessionError, "dolu"):
-            reconstruct(self.root, colmap=sys.executable, mode="sparse", gpu=False, dry_run=False)
-        self.assertEqual((self.root / "reconstruction" / "data.txt").read_text(), "keep")
-
-    def test_mock_colmap_command_sequence_and_summary(self):
-        def fake_run(command, check):
-            self.assertTrue(check)
-            if command[1] == "mapper":
-                write_model(self.root / "reconstruction" / "sparse" / "0")
-        with mock.patch("monoscan.subprocess.run", side_effect=fake_run) as run:
-            reconstruct(self.root, colmap=sys.executable, mode="sparse", gpu=False, dry_run=False)
-        self.assertEqual(run.call_count, 3)
-        report = json.loads((self.root / "reconstruction" / "summary.json").read_text(encoding="utf-8"))
-        self.assertEqual(report["point_count"], 1)
-        self.assertEqual(report["registered_images"], 2)
-
-    def test_no_points_is_a_failure_not_fake_success(self):
-        def fake_run(command, check):
-            if command[1] == "mapper":
-                folder = self.root / "reconstruction" / "sparse" / "0"
-                write_model(folder)
-                (folder / "points3D.bin").write_bytes((0).to_bytes(8, "little"))
-        with mock.patch("monoscan.subprocess.run", side_effect=fake_run):
-            with self.assertRaisesRegex(SessionError, "yeterli sahne"):
-                reconstruct(self.root, colmap=sys.executable, mode="sparse", gpu=False, dry_run=False)
-        self.assertFalse((self.root / "reconstruction" / "summary.json").exists())
 
     def test_png_header(self):
         self.assertEqual(image_dimensions(self.root / "images" / "frame_0000.png"), (16, 12))
@@ -171,54 +140,6 @@ class SessionTests(unittest.TestCase):
         out = self.root / "out"
         self.assertEqual(main(["demo", str(out)]), 0)
         self.assertEqual(main(["demo", str(out)]), 1)  # fail-closed on existing files
-
-
-class ModelTests(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.root = Path(self.tmp.name)
-        write_model(self.root)
-
-    def tearDown(self):
-        self.tmp.cleanup()
-
-    def test_inspect(self):
-        report = inspect_model(self.root)
-        self.assertEqual(report["registered_images"], 2)
-        self.assertEqual(report["point_count"], 1)
-        self.assertAlmostEqual(report["mean_reprojection_error_px"], 0.25)
-        self.assertFalse(report["metric_scale_known"])
-
-    def test_export_ply(self):
-        path = self.root / "export.ply"
-        export_ply(self.root, path)
-        text = path.read_text(encoding="ascii")
-        self.assertIn("element vertex 1", text)
-        self.assertIn("1 2 3 10 20 30", text)
-        with self.assertRaisesRegex(ModelError, "zaten var"):
-            export_ply(self.root, path)
-
-    def test_missing_model(self):
-        (self.root / "points3D.bin").unlink()
-        with self.assertRaises(ModelError):
-            inspect_model(self.root)
-
-    def test_corrupt_model(self):
-        (self.root / "points3D.bin").write_bytes(b"\x01")
-        with self.assertRaises(ModelError):
-            inspect_model(self.root)
-
-    def test_truncated_points_track_rejected(self):
-        original = (self.root / "points3D.bin").read_bytes()
-        (self.root / "points3D.bin").write_bytes(original[:-4])
-        with self.assertRaises(ModelError):
-            inspect_model(self.root)
-
-    def test_truncated_image_keypoints_rejected(self):
-        original = (self.root / "images.bin").read_bytes()
-        (self.root / "images.bin").write_bytes(original[:-2])
-        with self.assertRaises(ModelError):
-            inspect_model(self.root)
 
 
 class GeometryTests(unittest.TestCase):

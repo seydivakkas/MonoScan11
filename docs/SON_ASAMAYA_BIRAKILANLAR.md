@@ -1,3 +1,8 @@
+> **2026-10-15 notu:** Bu belge eski COLMAP tabanlı çalışma planının tarihsel
+> kaydıdır. Güncel native SfM geliştirme dalı için
+> [COLMAP_FREE_ARCHITECTURE.md](COLMAP_FREE_ARCHITECTURE.md) esas alınmalıdır.
+> Eski COLMAP görevleri yeni sistemin tamamlanma koşulu değildir.
+
 # MonoScan11 — En son aşamaya bırakılan işler (DONMUŞ KAPSAM)
 
 **Karar tarihi:** 10 Ekim 2026  

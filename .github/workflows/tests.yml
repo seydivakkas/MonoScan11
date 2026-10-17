@@ -18,10 +18,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install native CPU dependencies
+        run: python -m pip install -r requirements-native.txt
       - name: Unit tests (no Xcode / no COLMAP required)
         run: python -m unittest discover -s tests -v
       - name: Python syntax
-        run: python -m compileall -q tools tests scripts
+        run: python -m compileall -q tools monoscan_core tests scripts
   swift-foundation:
     name: Linux Swift core / ZIP format contract
     runs-on: ubuntu-latest
@@ -50,5 +52,77 @@ jobs:
               with tempfile.TemporaryDirectory() as folder:
                   src.extractall(folder)
                   subprocess.run([sys.executable,'tools/monoscan.py','validate',folder],check=True)
-          print('PASS: ZIP integrity + Python session.json contract')
+                  from monoscan_core.workspace import ProjectCatalog, validate_archive
+                  members, manifest = validate_archive(archive)
+                  assert len(manifest['frames']) == 3
+                  project = ProjectCatalog(pathlib.Path(folder)/'n7-catalog')
+                  imported = project.import_zip(archive, name='Swift ZIP synthetic fixture')
+                  assert project.session_path(imported['id']).joinpath('session.json').is_file()
+                  assert sum(n.startswith('images/') for n in members) == 3
+          print('PASS: Swift ZIPStore -> strict N7 import -> native Python validator')
           PY
+
+  n8-synthetic-e2e:
+    name: N8 procedural full N4→N5→N6→N7 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install native CPU dependencies
+        run: python -m pip install -r requirements-native.txt
+      - name: Run original native algorithms on only procedurally generated image ZIP
+        run: python scripts/n8_synthetic_acceptance.py --repeat 2 --max-side 112 --planes 36 --output n8-acceptance.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: n8-synthetic-report-${{ matrix.os }}
+          path: n8-acceptance.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  n8-source-package:
+    name: N8 reproducible source-only ZIP / SHA-256
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Assemble deterministic offline-capable Windows SOURCE bundle
+        run: python scripts/package_n8_windows.py --output dist/MonoScan11-N8-source.zip
+      - name: Verify SOURCE bundle SHA-256, no user data
+        run: python scripts/package_n8_windows.py --verify dist/MonoScan11-N8-source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MonoScan11-N8-source-only
+          path: dist/MonoScan11-N8-source.zip
+          retention-days: 14
+
+  n9-split-contracts:
+    name: N9-A/B contracts ONLY (synthetic; physical N9-B NOT TESTED)
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install native image/geometry dependencies
+        run: python -m pip install -r requirements-native.txt
+      - name: Verify N9-A/N9-B split with synthetic fixtures only
+        run: python -m unittest discover -s tests -p 'test_n9_split.py' -v
+      - name: Emit eight untested physical gates (not a field acceptance)
+        run: python scripts/n9b_audit.py --evidence-root . --output n9b-not-tested.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: n9b-physical-not-tested-contract
+          path: n9b-not-tested.json
+          retention-days: 14

@@ -19,7 +19,7 @@ struct GuideScreen: View {
                 Group {
                     DisclosureGroup("LiDAR gerekiyor mu?") { Text("Hayır. iPhone 11 RGB kamera ve ARKit pozlarını kullanır.").padding(.top, 8) }
                     DisclosureGroup("Kaç fotoğraf çekmeliyim?") { Text("30–60 farklı açı önerilir. Bu bir başarı garantisi değildir.").padding(.top, 8) }
-                    DisclosureGroup("Windows neden gerekiyor?") { Text("Çoklu-görüş rekonstrüksiyonu COLMAP ile Windows'ta gerçekleştirilir.").padding(.top, 8) }
+                    DisclosureGroup("Windows neden gerekiyor?") { Text("Deneysel çoklu-görüş rekonstrüksiyonu MonoScan11'in yerel motoruyla Windows'ta gerçekleştirilir.").padding(.top, 8) }
                     DisclosureGroup("Poz kaydı olmasa da çalışır mı?") { Text("Fotoğraflardan SfM uygulanabilir; sonuçlar sahneye bağlıdır.").padding(.top, 8) }
                 }.padding(14).background(MS.panel, in: RoundedRectangle(cornerRadius: 12))
                 MSButton(title: "Yeni Tarama", systemImage: "plus", action: newScan)

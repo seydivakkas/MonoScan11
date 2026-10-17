@@ -1,0 +1,116 @@
+{
+  "protocol": "N9-A-v2-public-real-temporal-window-and-N4N5N6",
+  "date_local_TR": "2026-10-18",
+  "status": "REAL_INPUT_GEOMETRY_PRODUCED_REVIEW_REQUIRED",
+  "source": {
+    "dataset": "Apple ARKitScenes",
+    "video_id": "41069046",
+    "split": "Validation",
+    "camera": "iPad Pro - not iPhone 11",
+    "data_origin": "Apple original PNG + .pincam + .traj",
+    "source_asset_sha256": {
+      "lowres_wide.zip": "8fe4e26493977d0a496018c7a0db8703ddc24805caa415983d182d8c9b745999",
+      "lowres_wide_intrinsics.zip": "74e7f276720a8a5c7066a351916caa4d333e22940000231ca515060aa8ff1276",
+      "lowres_wide.traj": "e3bcb8d211be8ec89fe159f9f699fd6e287b3b20f58af879dc788f5f4ab57d50"
+    }
+  },
+  "experiment": {
+    "mode": "arkit-guided",
+    "cohorts": [
+      {
+        "name": "uniform-baseline",
+        "time_span_seconds": 119.784,
+        "frames": 16,
+        "registered": 3,
+        "sparse_points": 28,
+        "observations": 56,
+        "median_reprojection_px": 0.26860793621143175,
+        "result": "PARTIAL"
+      },
+      {
+        "name": "early-window",
+        "time_span_seconds": 3.816,
+        "frames": 16,
+        "registered": 13,
+        "sparse_points": 96,
+        "observations": 363,
+        "median_reprojection_px": 0.5661326426110035,
+        "result": "PARTIAL"
+      },
+      {
+        "name": "mid-window",
+        "time_span_seconds": 3.898,
+        "frames": 16,
+        "registered": 15,
+        "sparse_points": 172,
+        "observations": 374,
+        "median_reprojection_px": 0.8796488190412732,
+        "result": "PARTIAL"
+      },
+      {
+        "name": "late-window",
+        "time_span_seconds": 3.899,
+        "frames": 16,
+        "registered": 16,
+        "sparse_points": 215,
+        "observations": 685,
+        "median_reprojection_px": 0.7026675571576126,
+        "result": "SUCCESS_SPARSE"
+      }
+    ],
+    "chosen": "late-window",
+    "selection_rule": "predeclared max registered -> point count -> registration fraction -> lower reprojection; failures included"
+  },
+  "n5": {
+    "input": "late-window native N4 (16 registered cameras)",
+    "state": "PARTIAL",
+    "status": "OUTPUT_REVIEW_REQUIRED",
+    "sparse_points": 215,
+    "cameras": 16,
+    "observations": 685,
+    "pre_ba_median_reprojection_px": 0.702667557157548,
+    "post_ba_median_reprojection_px": 0.2386054300953434,
+    "pre_ba_p90_reprojection_px": 2.1521305873095,
+    "post_ba_p90_reprojection_px": 0.6860292984449712,
+    "optimized_without_device_metrology": true
+  },
+  "n6": {
+    "input": "independent 8-frame late-window REAL Apple RGB/N4/N5",
+    "N4_registered": 8,
+    "N4_points": 102,
+    "N5_status": "PARTIAL",
+    "N5_pre_median_px": 0.523410899663117,
+    "N5_post_median_px": 0.17724869649245872,
+    "depth_interval_arkit_nominal_m": [
+      0.64257,
+      2.07584
+    ],
+    "depth_samples": 816,
+    "planes": 24,
+    "max_image_side_px": 96,
+    "output_state": "SYNTHETIC_GEOMETRY_ONLY",
+    "output_label_interpretation": "experimental CPU MVS on real imagery, not physical accuracy validation",
+    "dense_fused_points": 675,
+    "open_mesh_vertices": 2606,
+    "open_mesh_faces": 3365,
+    "physical_reference_used": false
+  },
+  "evidence": {
+    "run": "https://github.com/seydivakkas/MonoScan11/actions/runs/39073111223",
+    "artifact_id": 12115703660,
+    "artifact": "https://github.com/seydivakkas/MonoScan11/actions/runs/39073111223/artifacts/12115703660",
+    "full_json_sha256": "9236b1b680e02b33b3f7a76c59db376219c47f8f408cca43230498ecc1abe886",
+    "original_media_republished": false,
+    "source_geometry_republished": false
+  },
+  "n9a_verdict": "N4 sparse success in 16/16 window; N5 and N6 produced experimental outputs; overall REVIEW_REQUIRED, not final PASS",
+  "n9b_physical_iphone11": "NOT_TESTED",
+  "n9b_physical_windows": "NOT_TESTED",
+  "real_world_metric_accuracy": false,
+  "limitations": [
+    "N5 output state remains PARTIAL despite reprojection reduction.",
+    "N6 summary state SYNTHETIC_GEOMETRY_ONLY; genuine RGB inputs do not establish actual mesh measurement precision.",
+    "No independently surveyed ground truth, no real iPhone11 capture/Xcode, no physical Windows UAT.",
+    "N6 CPU mesh is open, not watertight, no claim LiDAR equivalence."
+  ]
+}

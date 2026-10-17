@@ -1,0 +1,58 @@
+name: N9-A real temporal groups N4 N5 N6 (not iPhone11)
+
+# Rerun once after N4 duplicate-track correction and 8-view N6 adapter.
+
+on:
+  push:
+    branches: [feature/native-sfm-n0-n3]
+    paths:
+      - '.github/workflows/n9a-temporal-real.yml'
+  workflow_dispatch:
+    inputs:
+      dataset_license_reviewed:
+        type: boolean
+        required: true
+        default: false
+        description: I reviewed Apple's ARKitScenes terms for this local research test
+
+jobs:
+  real-cohort-n4-n5-n6:
+    name: Real iPad RGB N4 windows plus N5/N6 attempt / N9-B NOT TESTED
+    runs-on: ubuntu-latest
+    timeout-minutes: 27
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline native CPU dependencies
+        run: python -m pip install -r requirements-native.txt
+      - name: Real public data multi-window, N4 N5 N6
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dataset_license_reviewed }}" != "true" ]; then
+            echo "Public dataset rights review required"
+            exit 2
+          fi
+          python scripts/n9a_temporal_real_ci.py \
+            --output n9a-real-temporal-evidence.json \
+            --video-id 41069046 --split Validation \
+            --max-frames 16 --window-seconds 4 \
+            --license-reviewed
+      - name: Upload numerical evidence ONLY (never third-party media)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n9a-real-temporal-source-hashes-and-geometry-only
+          path: n9a-real-temporal-evidence.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Physical acceptance exclusion
+        if: always()
+        run: |
+          echo "N9-B iPhone11 physical device: NOT TESTED"
+          echo "N9-B Windows physical installation: NOT TESTED"
+          echo "NO original RGB, camera pose dataset, PLY/OBJ or 3D models uploaded"
