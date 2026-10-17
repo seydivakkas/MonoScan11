@@ -282,15 +282,21 @@ python scripts/n9_fetch_arkitscenes.py --video-id 41069046 --split Validation --
   kontrolünden sonra* gerçek N3–N6 motoruna vererek dosya SHA, model
   artefaktları ve gerçek hata/başarı raporu üretir.
   `scripts/n9a_run.py` ve `monoscan_core/n9a_acceptance.py` eklendi.
-  **17 Ekim 2026 güncellemesi:** Apple ARKitScenes Validation 41069046
-  gerçek iPad Pro RGB/K/pose girdileri indirildi; 16 görüntüden
-  **3 kamera kayıtlı, 28 seyrek nokta, 13 kayıtsız, N4 `PARTIAL`**.
-  N9-A'nın veri erişim engeli kaldırıldı, ancak kalite kabulü hâlâ
-  `PROXY_PARTIAL_REVIEW_REQUIRED`. N5/N6 ve bağımsız fiziksel ölçüm
-  bu gerçek veri koşusunda **NOT RUN**.
-  [Gerçek kanıt](docs/evidence/N9A_ARKITSCENES_REAL_2026-10-17.json) ·
-  [GitHub Actions](https://github.com/seydivakkas/MonoScan11/actions/runs/39048623303) ·
-  [tarihsel ilk engel](docs/evidence/N9A_BASELINE_BLOCKED_2026-10-17.json).
+  **18 Ekim 2026 güncellemesi:** Apple ARKitScenes iPad Pro gerçek
+  PNG/K/pose ile önceki 3/16 kamera kaydı, 4 saniyelik zamansal
+  pencereler sayesinde **13/16, 15/16 ve 16/16** oldu. En iyi N4
+  modeli **215 seyrek 3B nokta** üretti. N4 duplicate-observation
+  hatası düzeltildikten sonra gerçek modelde N5 BA ortanca iç
+  reprojeksiyon hatası **0,703→0,239 px** (native durum **PARTIAL**).
+  Aynı özgün 4 saniyelik pencereden ayrı **8/8 kayıtlı kameralı**
+  N4/N5 alt modeliyle N6, **675 füzyon noktası + 3.365 yüzlü açık
+  mesh** üretti (native **SYNTHETIC_GEOMETRY_ONLY**: deneysel
+  prototip etiketi). Gerçek görüntüler işlendi; **bağımsız fiziksel
+  mesafe doğruluğu ve iPhone11 gerçek cihaz kabulü kanıtlanmadı**.
+  N9-A genel karar **PARTIAL / REVIEW_REQUIRED**, N9-B **NOT TESTED**.
+  [Tam mühendislik raporu](docs/N9A_TEMPORAL_REAL_TRIAL.md) ·
+  [Hash ve ölçüm JSON kanıtı](docs/evidence/N9A_TEMPORAL_REAL_N4_N5_N6_2026-10-18.json) ·
+  [Gerçek CI](https://github.com/seydivakkas/MonoScan11/actions/runs/39073111223).
 - **N9-B (fiziksel kabul):** orijinal iPhone11/Xcode, lens/K/distorisyon,
   kör bağımsız referans, gerçek Windows kurulum/bellek ve NVDA/UX
   değerlendirmesi sekiz ayrı kanıt kapısıdır. `scripts/n9b_audit.py`
