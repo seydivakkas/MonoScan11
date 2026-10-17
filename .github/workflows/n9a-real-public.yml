@@ -1,5 +1,7 @@
 name: N9-A limited real public RGB trial (NO iPhone11 physical acceptance)
 
+# One follow-up diagnostic run (real sparse point count/reprojection evidence).
+# All future reruns otherwise require a reviewed manual dispatch.
 # One controlled initial run on addition of this workflow; future runs only
 # through a reviewed manual dispatch. Prevent repeated real dataset downloads
 # on every ordinary source-code push.
