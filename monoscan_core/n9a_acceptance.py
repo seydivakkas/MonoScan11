@@ -101,7 +101,7 @@ def inspect_input(session, mode):
     }
 
 
-def _model_evidence(raw, mode):
+def _model_evidence(raw, mode, stage):
     if not isinstance(raw, dict) or not isinstance(raw.get("run"), str):
         raise N9AError("Native runner did not report an existing run")
     run = Path(raw["run"]).expanduser().resolve()
@@ -111,18 +111,26 @@ def _model_evidence(raw, mode):
     if (summary.get("engine") != "monoscan-native"
             or summary.get("real_world_validated") is True):
         raise N9AError("Model is not a supported unverified MonoScan11 run")
-    artifacts = {p.name: sha256_file(p) for p in run.iterdir()
-                 if p.is_file() and p.name in {
-                     "summary.json", "sparse.ply", "tracks.json",
-                     "cameras.json", "dense.ply", "mesh.obj", "depth_maps.npz",
-                     "optimization.json"
-                 }}
-    if "summary.json" not in artifacts:
-        raise N9AError("Native artifacts have no provenance summary")
+    expected = {
+        "reconstruct": {"summary.json", "sparse.ply", "tracks.json", "cameras.json"},
+        "refine": {"summary.json", "sparse.ply", "tracks.json", "cameras.json", "optimization.json"},
+        "dense": {"summary.json", "dense.ply", "mesh.obj", "depth_maps.npz"},
+    }
+    required = expected.get(stage)
+    if required is None:
+        raise N9AError("Unexpected native model stage")
+    if any(not (run / name).is_file() for name in required):
+        raise N9AError("Required real-data native output missing for " + stage)
+    artifacts = {name: sha256_file(run / name) for name in sorted(required)}
+    if stage != "dense" and summary.get("mode_used") != mode:
+        raise N9AError("Native mode differs from N9-A source contract")
+    if stage == "dense" and summary.get("source_mode") != mode:
+        raise N9AError("Native N6 source mode mismatch")
     return {
         "run": str(run), "reported_state": str(summary.get("state", "UNREPORTED")),
         "mode_recorded": summary.get("mode_used", summary.get("source_mode")),
         "artifact_sha256": artifacts,
+        "geometry_mode": "unvalidated_n6_experimental" if stage == "dense" else "sparse_unverified",
         "real_world_validated": False,
     }
 
@@ -205,7 +213,7 @@ def evaluate_proxy_session(session, evidence_dir, *, mode, focal_px=None,
             if not isinstance(result, dict):
                 raise N9AError("Native stage returned non-JSON result")
             if stage != "validate":
-                entry = _model_evidence(result, mode)
+                entry = _model_evidence(result, mode, stage)
                 # Physical run path must be owned by this source session.
                 run = Path(entry["run"])
                 if not run.is_relative_to(session / "reconstruction" / "runs"):
@@ -224,7 +232,16 @@ def evaluate_proxy_session(session, evidence_dir, *, mode, focal_px=None,
         after = inspect_input(session, mode)
         if after["source_images"] != inspected["source_images"]:
             raise N9AError("Original RGB modified during real-data processing")
-        report["result"] = "PROXY_PROCESSING_COMPLETED_REVIEW_REQUIRED"
+        # N3/N4 frequently return PARTIAL; N6 still uses its experimental
+        # synthetic-only label even when a real-image proxy was supplied.
+        # Explicitly preserve this distinction in the N9-A report.
+        partial = any(
+            e.get("reported_state") == "PARTIAL" or
+            e.get("reported_state") == "SYNTHETIC_GEOMETRY_ONLY"
+            for e in report["events"]
+        )
+        report["result"] = ("PROXY_PARTIAL_REVIEW_REQUIRED" if partial
+                            else "PROXY_PROCESSING_COMPLETED_REVIEW_REQUIRED")
     except (ValueError, OSError, KeyError, PipelineError, N9AError) as exc:
         report["result"] = "PROXY_FAILED"
         report["failure"] = {
