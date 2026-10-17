@@ -62,13 +62,39 @@ N9-A çıktısı yalnız yeni klasörde `n9a_report.json` olarak oluşur:
 - `BLOCKED_PREREQUISITE`: veri / hak / kalibrasyon eksikliği.
 - `n9b_status: NOT_TESTED`: her N9-A çalışmasının zorunlu etiketi.
 
-**17 Ekim 2026 erişim durumu:** Resmî Pix4D ZIP'i (208 MB)
-çalışma ortamında indirilemedi. Yetkili özgün JPEG'ler bu oturumda
-yerel olarak mevcut değil. Gerçek iPhone fotoğraflarıyla **başarılı
-veya başarısız native rekonstrüksiyon deneyi henüz gerçekleştirilemedi**.
-Bu yüzden N9-A durumu `BLOCKED_SOURCE_UNAVAILABLE`. Kaynaklara
-erişildiğinde gerçek işlemler yeniden başlatılabilir;
-otomatik sentetik testler bunun yerini tutmaz.
+**17 Ekim 2026 gerçek veri deneyi:** Pix4D iPhone 13 ZIP'ine bu
+ortamdan erişim hâlâ sağlanamadı; **ancak Apple ARKitScenes Validation
+video 41069046** GitHub Actions'ın geçici çalışma ortamında indirildi
+ve özgün RGB/K/ARKit trajektori ile MonoScan11 N4 native motoru çalıştırıldı.
+Bu nedenle `BLOCKED_SOURCE_UNAVAILABLE` artık **tarihsel ilk deneme**
+durumudur, genel N9-A güncel durumu değildir.
+
+| N9-A gerçek kanıt | Ölçülen değer |
+|---|---|
+| Gerçek RGB girdisi | 16 Apple iPad Pro PNG |
+| Kayıtlı kamera / girdi | **3 / 16** (13 kayıt dışı) |
+| Seyrek 3B nokta | **28** |
+| Görüntü gözlemi ve aday eşleşme | **56 gözlem / 71 aday eşleşme** |
+| Ortanca / ortalama reprojeksiyon | **0,2686 / 0,4957 px** |
+| Nominal ARKit kamera baseline | 3,3227 m (*fiziksel ölçüm değil*) |
+| N4 kaynak modeller | `sparse.ply`, `tracks.json`, `cameras.json`, `summary.json` ve SHA |
+| N5 BA / N6 MVS | **NOT RUN** |
+| Resmî sonuç | `PROXY_PARTIAL_REVIEW_REQUIRED` |
+| N9-B iPhone 11 / fiziksel Windows | **NOT TESTED** |
+
+İşleme alanı özel GitHub runner'ında geçiciydi; telifli fotoğraflar
+depoya veya rapor artefaktına eklenmedi. Resmî üç kaynak varlığı ve
+16 görüntü için SHA-256 izleri kayıtlıdır. 13/16 görüntünün kayıt
+edilememesi nedeniyle **N9-A tam kabulü henüz PASS değil**.
+Ayrıca düşük reprojeksiyon hatası **bağımsız metrik doğruluk kanıtı
+değildir**. [Gerçek sonuç JSON kanıtı](evidence/N9A_ARKITSCENES_REAL_2026-10-17.json);
+[GitHub Actions gerçek veri koşusu](https://github.com/seydivakkas/MonoScan11/actions/runs/39048623303);
+[tam JSON artefaktı](https://github.com/seydivakkas/MonoScan11/actions/runs/39048623303/artifacts/12107001317).
+
+**Sonraki N9-A kalite kapısı:** gerçek karelerin yakın zamanlı ve
+yeterli parallax içeren alt kümelerini bağımsız biçimde değerlendirip
+kayıtlı kamera oranını artırmak; N5/N6'yı çalıştırmadan önce
+rekonstrüksiyonun destek ve ölçek sınırlarını doğrulamak.
 
 ## N9-B — Gerçek iPhone 11 ve fiziksel sistem kabulü
 
