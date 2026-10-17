@@ -107,7 +107,10 @@ def _timestamp_from_filename(name, video_id):
 
 def prepare_arkitscenes_session(source: Path, output: Path, *,
                                video_id: str, max_frames=24,
-                               max_timestamp_gap_seconds=0.02):
+                               max_timestamp_gap_seconds=0.02,
+                               selection_strategy="uniform",
+                               window_start_fraction=0.0,
+                               window_seconds=4.0):
     """Convert an already-authorized local RAW/scene into native session v1.
 
     A scan must contain folders lowres_wide/, lowres_wide_intrinsics/,
@@ -120,6 +123,14 @@ def prepare_arkitscenes_session(source: Path, output: Path, *,
         raise RealDatasetError("Must select between 3 and 100 observed frames")
     if not (0 < max_timestamp_gap_seconds <= 0.03):
         raise RealDatasetError("Timestamp tolerance must be explicit and at most 30 ms")
+    if selection_strategy not in ("uniform", "temporal-window"):
+        raise RealDatasetError("Unknown frame selection strategy")
+    if (not math.isfinite(float(window_start_fraction)) or not
+            0.0 <= window_start_fraction <= 1.0):
+        raise RealDatasetError("Window start fraction must be within [0,1]")
+    if (not math.isfinite(float(window_seconds)) or not
+            0.25 <= window_seconds <= 30.0):
+        raise RealDatasetError("Window duration must be within 0.25–30 seconds")
     if source == output or source in output.parents or output in source.parents:
         raise RealDatasetError("Source and destination must be independent")
     if output.exists():
@@ -173,9 +184,25 @@ def prepare_arkitscenes_session(source: Path, output: Path, *,
     candidates.sort(key=lambda v: v["timestamp"])
     if len(candidates) < 3:
         raise RealDatasetError("Fewer than three exact/near-exact RGB+K+pose triples")
-    # Include breadth of movement, not three adjacent poses by default.
-    indices = np.linspace(0, len(candidates)-1, min(max_frames, len(candidates)))
-    chosen = [candidates[i] for i in dict.fromkeys(int(round(x)) for x in indices)]
+    # Baseline historical choice spread frames over the entire recorded scan.
+    # N9-A temporal-window instead samples a bounded, reproducible interval
+    # to improve true image overlap. Camera motion is checked separately;
+    # it never certifies actual cross-image visual correspondences.
+    if selection_strategy == "uniform":
+        pool = candidates
+    else:
+        first, last = candidates[0]["timestamp"], candidates[-1]["timestamp"]
+        possible = max(0.0, (last - first) - window_seconds)
+        start = first + window_start_fraction * possible
+        stop = start + window_seconds
+        pool = [record for record in candidates
+                if start <= record["timestamp"] <= stop]
+        if len(pool) < 3:
+            raise RealDatasetError("Temporal window contains fewer than three RGB+K+pose triples")
+    indices = np.linspace(0, len(pool)-1, min(max_frames, len(pool)))
+    chosen = [pool[i] for i in dict.fromkeys(int(round(x)) for x in indices)]
+    if len(chosen) < 3:
+        raise RealDatasetError("Selected window has too few unique RGB observations")
     centers = np.asarray([np.asarray(f["cameraToWorld"])[:3, 3] for f in chosen])
     extent = float(np.max(np.linalg.norm(centers[:, None]-centers[None, :], axis=2)))
     if extent < 0.05:
@@ -203,6 +230,17 @@ def prepare_arkitscenes_session(source: Path, output: Path, *,
         "independent_ground_truth_used": False,
         "physical_device_accepted": False, "real_world_validated": False,
         "source_root": str(source), "video_id": video_id,
+        "selection": {
+            "strategy": selection_strategy,
+            "window_start_fraction": window_start_fraction if selection_strategy == "temporal-window" else None,
+            "requested_window_seconds": window_seconds if selection_strategy == "temporal-window" else None,
+            "candidate_count_in_pool": len(pool),
+            "total_valid_RGB_K_pose_triples": len(candidates),
+            "selected_frame_count": len(chosen),
+            "selected_timestamp_span_seconds": float(chosen[-1]["timestamp"] - chosen[0]["timestamp"]),
+            "camera_center_extent_nominal_m": extent,
+            "visual_overlap_confirmed_by_selection": False,
+        },
         "images": [
             {"file": f["file"], "original_image_sha256": f["sha256"],
              "pincam_sha256": hashlib.sha256(f["src_pincam"].read_bytes()).hexdigest(),
