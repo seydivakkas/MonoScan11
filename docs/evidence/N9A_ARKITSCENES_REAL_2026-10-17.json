@@ -1,0 +1,67 @@
+{
+  "protocol": "N9-A real-world public-image proxy / numerical reconstruction evidence v1",
+  "date_utc": "2026-10-17",
+  "source": "Apple ARKitScenes",
+  "source_repo": "https://github.com/apple-aiml-research/ARKitScenes",
+  "video_id": "41069046",
+  "split": "Validation",
+  "real_capture_device": "iPad Pro (LiDAR-equipped), NOT iPhone 11",
+  "images_original_real_rgb": 16,
+  "original_intrinsics_and_poses_present": true,
+  "original_source_sha256": {
+    "lowres_wide.traj": "e3bcb8d211be8ec89fe159f9f699fd6e287b3b20f58af879dc788f5f4ab57d50",
+    "lowres_wide.zip": "8fe4e26493977d0a496018c7a0db8703ddc24805caa415983d182d8c9b745999",
+    "lowres_wide_intrinsics.zip": "74e7f276720a8a5c7066a351916caa4d333e22940000231ca515060aa8ff1276"
+  },
+  "source_hashes_verification": "in GitHub Actions transient runner, not reproduced by independent physical recorder",
+  "dataset_license": "Apple ARKitScenes terms reviewed for limited research; original images not redistributed",
+  "ci": {
+    "run_id": 39048623303,
+    "url": "https://github.com/seydivakkas/MonoScan11/actions/runs/39048623303",
+    "artifact_id": 12107001317,
+    "artifact_url": "https://github.com/seydivakkas/MonoScan11/actions/runs/39048623303/artifacts/12107001317",
+    "full_json_sha256": "2c8d3a428287bb183a6e2cefc84a8ab9e8ebdb173a69e794b07331f53a43c552"
+  },
+  "native_sfm": {
+    "engine": "monoscan-native",
+    "mode": "arkit-guided",
+    "state": "PARTIAL",
+    "native_stages": [
+      "validate",
+      "reconstruct"
+    ],
+    "images_input": 16,
+    "images_registered": 3,
+    "images_unregistered": 13,
+    "sparse_point_count": 28,
+    "observation_count": 56,
+    "candidate_pair_matches": 71,
+    "triangulated_candidates": 30,
+    "median_reprojection_error_px": 0.26860793621143175,
+    "mean_reprojection_error_px": 0.4957005368919753,
+    "maximum_pose_baseline_nominal_m": 3.322660546561979,
+    "nominal_baseline_is_independent_ground_truth": false,
+    "pose_covariance_available": false,
+    "metric_scale_known": false,
+    "artifact_sha256": {
+      "cameras.json": "041fa659fc0dbcac2a657d47848257bd3c2963553d936562143ec1b25ab25b00",
+      "sparse.ply": "14e5424c30f641724ee89ba4392e5e01fb2f75e5d46d62422227d115a27777fd",
+      "summary.json": "cd46a724efd33b1b8c0ba71659dc9da53708988faa8b598c13e7394366091bc4",
+      "tracks.json": "1da8672685430bc783c60e0206f41739bf6bcef2c856c2f54b07674f12f4c1c0"
+    },
+    "native_refine_status": "NOT_RUN",
+    "native_dense_mvs_status": "NOT_RUN"
+  },
+  "n9a_acceptance": "PARTIAL_MORE_WORK_NEEDED",
+  "n9b_physical_iphone11": "NOT_TESTED",
+  "n9b_physical_windows": "NOT_TESTED",
+  "independent_metric_accuracy_accepted": false,
+  "real_world_validated": false,
+  "limitations": [
+    "Only 3/16 real RGB views registered; 13 remain unregistered.",
+    "Subpixel reprojection fit does not establish metric measurement accuracy.",
+    "ARKitScenes camera is iPad Pro; no actual iPhone11 capture or calibration.",
+    "N5 bundle adjustment and N6 dense MVS were not performed in this real-image trial.",
+    "Original imagery and full reconstruction binary assets are not redistributed; only hashes and numerical evidence are committed."
+  ]
+}
