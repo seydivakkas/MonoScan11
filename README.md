@@ -272,3 +272,31 @@ yapılmadı. Bu nedenle gerçek cihaz veya fiziksel doğruluk geçerliliği
 python scripts/n9_fetch_arkitscenes.py --video-id 41069046 --split Validation --output "C:\N9-Data\ARKitScenes\41069046" --show-urls
 # --license-reviewed bayrağı ancak veri kullanım koşullarını inceledikten sonra.
 ```
+
+## N9 kabulü iki ayrı aşamaya bölündü: N9-A / N9-B
+
+[N9-A ve N9-B teknik/kabul sözleşmesi](docs/N9A_N9B_SEPARATE_ACCEPTANCE.md).
+
+- **N9-A (kamusal gerçek görüntü işleme):** Pix4D iPhone13 PHOTO_ONLY
+  veya Apple ARKitScenes iPad Pro ARKit-guided oturumunu *lisans
+  kontrolünden sonra* gerçek N3–N6 motoruna vererek dosya SHA, model
+  artefaktları ve gerçek hata/başarı raporu üretir.
+  `scripts/n9a_run.py` ve `monoscan_core/n9a_acceptance.py` eklendi.
+  **17 Ekim 2026 durum: gerçek arşivin indirilmesi başarısız;
+  gerçek fotoğraf işleme N9-A kabulü `BLOCKED_SOURCE_UNAVAILABLE`.**
+  [Şeffaf durum kanıtı](docs/evidence/N9A_BASELINE_BLOCKED_2026-10-17.json).
+- **N9-B (fiziksel kabul):** orijinal iPhone11/Xcode, lens/K/distorisyon,
+  kör bağımsız referans, gerçek Windows kurulum/bellek ve NVDA/UX
+  değerlendirmesi sekiz ayrı kanıt kapısıdır. `scripts/n9b_audit.py`
+  güvenli yerel SHA kontrolü sağlar fakat **asla otomatik PASS vermez**.
+  **N9-B: NOT_TESTED.**
+- N0–N8 sentetik CI başarıları bu iki aşamanın gerçek veri/cihaz
+  sonuçları yerine kullanılmaz.
+
+```powershell
+# Kaynaklar hazırsa, orijinal görüntülerin byte ve kanıt denetimi:
+python scripts/n9a_run.py --session "C:\N9-Data\iphone13-session" --report-dir "C:\N9-Reports\preflight" --mode photo-only --focal-px $env:N9_VERIFIED_FOCAL_PX --rights-reviewed --preflight-only
+
+# Başlangıçta sekiz fiziksel kapının NOT_TESTED olduğunu göster:
+python scripts/n9b_audit.py --evidence-root "C:\N9-Physical-Evidence"
+```
