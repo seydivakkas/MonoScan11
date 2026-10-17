@@ -90,6 +90,31 @@ class N9AProtocolTests(unittest.TestCase):
             persistent = json.loads((Path(td) / "trial" / "n9a_report.json").read_text())
             self.assertEqual(persistent["result"], "PROXY_FAILED")
 
+    def test_native_partial_results_never_claim_real_device_success(self):
+        with tempfile.TemporaryDirectory() as td:
+            session, _ = self._session(td)
+            def fake(args, timeout):
+                if args[0] == "validate":
+                    return {"images": 5, "pose_records": 0}
+                folder = session / "reconstruction" / "runs" / "run-test-only"
+                folder.mkdir(parents=True, exist_ok=True)
+                (folder / "summary.json").write_text(json.dumps({
+                    "engine": "monoscan-native", "mode_used": "photo-only",
+                    "state": "PARTIAL", "real_world_validated": False
+                }))
+                for name in ("sparse.ply", "tracks.json", "cameras.json"):
+                    (folder / name).write_text("nongeometric test placeholder")
+                return {"run": str(folder)}
+            result = evaluate_proxy_session(
+                session, Path(td) / "trial", mode="photo-only",
+                focal_px=650, rights_reviewed=True, execute=fake)
+            self.assertEqual(result["classification"], "SYNTHETIC_CONTRACT_TEST")
+            self.assertEqual(result["result"], "PROXY_PARTIAL_REVIEW_REQUIRED")
+            self.assertEqual(len(result["events"]), 2)
+            self.assertIn("sparse.ply", result["events"][1]["artifact_sha256"])
+            self.assertFalse(result["real_world_validated"])
+            self.assertEqual(result["n9b_status"], "NOT_TESTED")
+
     def test_native_returned_model_must_be_local_and_unverified(self):
         with tempfile.TemporaryDirectory() as td:
             session, _ = self._session(td)
@@ -101,6 +126,8 @@ class N9AProtocolTests(unittest.TestCase):
                 (bad / "summary.json").write_text(json.dumps({
                     "engine":"monoscan-native", "mode_used":"photo-only",
                     "state":"PARTIAL", "real_world_validated":False}))
+                for name in ("sparse.ply", "tracks.json", "cameras.json"):
+                    (bad / name).write_text("synthetic test artifact")
                 return {"run":str(bad)}
             report = evaluate_proxy_session(
                 session, Path(td) / "trial", mode="photo-only",
