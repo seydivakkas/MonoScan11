@@ -1,0 +1,43 @@
+{
+  "protocol": "N9-A v1",
+  "observation_date": "2026-10-17",
+  "result": "BLOCKED_SOURCE_UNAVAILABLE",
+  "real_images_downloaded": 0,
+  "real_images_processed": 0,
+  "real_sfm_runs": 0,
+  "real_3d_points_measured": null,
+  "real_mesh_faces_measured": null,
+  "actual_iphone11_capture": false,
+  "physical_windows_accepted": false,
+  "metric_accuracy_certified": false,
+  "n9b_status": "NOT_TESTED",
+  "sources": [
+    {
+      "dataset": "Pix4D Olympic Flame",
+      "device": "iPhone 13",
+      "url": "https://data.pix4d.com/misc/example_datasets/olympic_flame.zip",
+      "source_images_advertised": 117,
+      "attempted_download": true,
+      "download_result": "FAILED_WORKSPACE_NETWORK_UNAVAILABLE",
+      "license_attested_by_user": false
+    },
+    {
+      "dataset": "Apple ARKitScenes",
+      "device": "iPad Pro",
+      "url": "https://github.com/apple-aiml-research/ARKitScenes",
+      "attempted_download": false,
+      "download_result": "NOT_ATTEMPTED",
+      "license_attested_by_user": false
+    },
+    {
+      "dataset": "ScanNet++",
+      "device": "iPhone model unverified",
+      "url": "https://scannetpp.mlsg.cit.tum.de/scannetpp/",
+      "attempted_download": false,
+      "download_result": "ACCESS_APPROVAL_REQUIRED",
+      "license_attested_by_user": false
+    }
+  ],
+  "evidence_quality": "DATA_ACCESS_BLOCKER_NOT_COMPUTER_VISION_RESULT",
+  "note": "This JSON is a project status ledger, not a native MonoScan11 reconstruction run and not proof of physical iPhone11 accuracy."
+}
