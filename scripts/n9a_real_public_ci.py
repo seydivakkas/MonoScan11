@@ -124,11 +124,37 @@ def execute_trial(output, *, license_reviewed, video_id="41069046",
                 "failure": _scrub(original.get("failure", {}).get("reason", ""), root)
                 if original.get("failure") else None,
             }
+            # Read the actual native summary generated from real RGB. The
+            # original image/model bytes are never uploaded, only numerical
+            # diagnostics and model-asset SHA-256 evidence are published.
+            reconstructed = next(
+                (e for e in original.get("events", [])
+                 if e.get("stage") == "reconstruct"), None
+            )
+            if reconstructed:
+                summary_path = Path(reconstructed["run"]) / "summary.json"
+                real_model_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+                whitelist = (
+                    "state", "image_count", "registered_images", "point_count",
+                    "observation_count", "candidate_pair_matches",
+                    "triangulated_candidates", "mean_reprojection_error_px",
+                    "median_reprojection_error_px", "maximum_pose_baseline_nominal_m",
+                    "pose_covariance_available", "metric_scale_known",
+                    "real_world_validated", "scale_status",
+                )
+                report["real_sparse_geometry_diagnostics"] = {
+                    name: real_model_summary.get(name) for name in whitelist
+                }
+                report["real_sparse_geometry_diagnostics"]["unregistered_image_count"] = (
+                    len(real_model_summary.get("unregistered_images", []))
+                )
             report["run_geometry_successful"] = (
-                original.get("result") in {
+                reconstructed is not None
+                and report.get("real_sparse_geometry_diagnostics", {}).get("point_count", 0) > 0
+                and original.get("result") in {
                     "PROXY_PARTIAL_REVIEW_REQUIRED",
                     "PROXY_PROCESSING_COMPLETED_REVIEW_REQUIRED",
-                } and any(e.get("stage") == "reconstruct" for e in original.get("events", []))
+                }
             )
             report["result"] = original.get("result", "UNRECOGNIZED")
         except (DatasetFetchError, RealDatasetError, N9AError,
