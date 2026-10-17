@@ -1,5 +1,7 @@
 name: N9-A real temporal groups N4 N5 N6 (not iPhone11)
 
+# Rerun once after N4 duplicate-track correction and 8-view N6 adapter.
+
 on:
   push:
     branches: [feature/native-sfm-n0-n3]
