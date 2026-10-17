@@ -6,7 +6,7 @@ doğrulandı; N9-A ve N9-B **birbirlerinin yerine geçmez**.
 ## N9-A — Gerçek internet görüntüleriyle yazılım deneyi
 
 Amaç: Kullanım hakkı gözden geçirilmiş özgün gerçek görüntüleri
-MongoScan değil **MonoScan11'in kendi COLMAP'sız N3/N4/N5/N6** motoruna
+**MonoScan11'in kendi COLMAP'sız N3/N4/N5/N6** motoruna
 verip başarısızlıkları da dahil olmak üzere tekrarlanabilir somut dosya
 kanıtları elde etmek. N9-A, iPhone 11 donanım kabulü değildir.
 
@@ -55,6 +55,7 @@ N9-A çıktısı yalnız yeni klasörde `n9a_report.json` olarak oluşur:
   gerçekten komuttan dönen native dosya delilleri.
 - `PROXY_PROCESSING_COMPLETED_REVIEW_REQUIRED`: dosya işlendi,
   **metrik, fiziksel iPhone 11 veya insan kabulü değil**.
+- `PROXY_PARTIAL_REVIEW_REQUIRED`: gerçek algoritmalar dosya üretti, ancak sparse/BA durumu `PARTIAL` veya N6 geometrisi yalnız deneysel; eksiksiz kabul değildir.
 - `PROXY_FAILED`: giriş gerçek olsa bile motor başarısız oldu;
   hata metni saklanır.
 - `SOURCE_PREFLIGHT_ONLY`: görüntü doğrulandı fakat SfM çalışmadı.
