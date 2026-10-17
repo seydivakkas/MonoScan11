@@ -1,7 +1,8 @@
 # N9-A / N9-B — Ayrı Doğrulama ve Kabul Protokolü
 
-Tarih: 17 Ekim 2026. N0–N8 yalnız **sentetik kabul** düzeyinde
-doğrulandı; N9-A ve N9-B **birbirlerinin yerine geçmez**.
+İlk karar: 17 Ekim 2026. Güncelleme: **18 Ekim 2026**. N0–N8 sentetik kabul düzeyinde doğrulandı; N9-A ve N9-B **birbirlerinin yerine geçmez**.
+
+**Güncel N9-A kanıtı:** Resmî Apple ARKitScenes iPad Pro gerçek RGB/K/poz kayıtlarıyla [4 zamansal grup + N5/N6 bağımsız deney raporu](N9A_TEMPORAL_REAL_TRIAL.md) oluşturuldu: en iyi N4 **16/16 kayıtlı**, 215 sparse nokta; N5 (native **PARTIAL**) BA sonrası ortanca 0,239 px; N6 sekiz gerçek görüntüde 675 fused nokta ve 3.365 açık mesh yüzü (native **SYNTHETIC_GEOMETRY_ONLY**). **N9-A genel durum PARTIAL / REVIEW_REQUIRED**, N9-B fiziksel iPhone 11 kabulü **NOT TESTED**. [Kanıt](evidence/N9A_TEMPORAL_REAL_N4_N5_N6_2026-10-18.json).
 
 ## N9-A — Gerçek internet görüntüleriyle yazılım deneyi
 
@@ -62,7 +63,7 @@ N9-A çıktısı yalnız yeni klasörde `n9a_report.json` olarak oluşur:
 - `BLOCKED_PREREQUISITE`: veri / hak / kalibrasyon eksikliği.
 - `n9b_status: NOT_TESTED`: her N9-A çalışmasının zorunlu etiketi.
 
-**17 Ekim 2026 gerçek veri deneyi:** Pix4D iPhone 13 ZIP'ine bu
+**17 Ekim 2026 TARİHSEL İLK gerçek veri deneyi (yerine 18 Ekim 2026 sonuçları geçti):** Pix4D iPhone 13 ZIP'ine bu
 ortamdan erişim hâlâ sağlanamadı; **ancak Apple ARKitScenes Validation
 video 41069046** GitHub Actions'ın geçici çalışma ortamında indirildi
 ve özgün RGB/K/ARKit trajektori ile MonoScan11 N4 native motoru çalıştırıldı.
@@ -137,3 +138,7 @@ otomatik olarak başarıya taşımaz.** Cihaz, uzman ve ölçüm yoksa N9-B
   veri/cihaz kabulü kendiliğinden PASS olamaz**.
 - `main` korunur, PR taslak tutulur, "stable" veya "iPhone11
   verified" etiketi N9-B gerçek bağımsız kabulüne kadar kullanılmaz.
+
+## 18 Ekim 2026 bağımsız gerçek N9-A kalite ilerlemesi
+
+4 saniyelik gerçek kare kümeleri (uniform 3/16, erken 13/16, orta 15/16, son 16/16) ile önceki kayıt engeli çözüldü. N4'ün aynı kameradan aynı 3B noktaya iki keypoint bağlama hatası onarıldı. Gerçek görüntüden N5 ve N6 çıktı üretildi; native PARTIAL/deneysel geometri bayrakları aynen korundu. Ayrıntılar: [Tam kaynaklı N4/N5/N6 raporu](N9A_TEMPORAL_REAL_TRIAL.md). Harici ölçüm, lens kalibrasyonu ve fiziksel iPhone11 testleri hâlâ N9-B kapısıdır.
